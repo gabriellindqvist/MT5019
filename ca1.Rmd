@@ -137,7 +137,6 @@ if (1 < ci_lower || 1 > ci_upper) {
   cat("Interpretation: The relative risk of being in favor of legal abortion does not significantly differ between women and men.\n")
 }
 ```
-#Exercise1.5
 ### Why Do the Results Differ?
 - **Odds Ratio vs Risk Ratio**:
   - Odds Ratio compares the relative odds (favor vs oppose), focusing on the ratio of proportions within each group.
