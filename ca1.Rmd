@@ -4,4 +4,9 @@ author: "Gabriel Lindqvist, Jiahui Li"
 date: "`r Sys.Date()`"
 output: pdf_document
 ---
-
+```{r, echo = FALSE}
+tab1<- as.table(rbind(c(309, 191), c(319, 281)))
+dimnames(tab1) <- list(gender = c("women", "men"),opinion = c("favor","against"))
+addmargins(tab1)
+addmargins(prop.table(tab1,1),2)
+```
