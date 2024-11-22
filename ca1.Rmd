@@ -4,13 +4,14 @@ author: "Gabriel Lindqvist, Jiahui Li"
 date: "`r Sys.Date()`"
 output: pdf_document
 ---
-# Exercise1.1
-```{r, echo=FALSE}
-# Input the data
-survey_data <- matrix(c(309, 191, 319, 281), nrow = 2, byrow = TRUE)
-rownames(survey_data) <- c("Women", "Men")
-colnames(survey_data) <- c("In favor", "Against")
-survey_data
+
+# Exercise1:1
+
+## Task 1
+Calculate the percentage in favor and against legal abortion for men and women separately.
+```{r}
+survey_data<- as.table(rbind(c(309, 191), c(319, 281)))
+dimnames(survey_data) <- list(gender = c("women", "men"),opinion = c("favor","against"))
 
 women_in_favor <- survey_data[1,1]
 men_in_favor <- survey_data[1,2]
@@ -30,8 +31,9 @@ cat("Women: In favor =", women_percent_in_favor, "%, Against =", women_percent_a
 cat("Men: In favor =", men_percent_in_favor, "%, Against =", men_percent_against, "%\n")
 
 ```
-# Exercise1.2
-```{r, echo = FALSE}
+The proportion of women who are in favor of legal abortion is evidently larger than men's.
+## Task 2
+```{r}
 # Calculate Pearson's Chi-squared test
 chi_squared_result <- chisq.test(survey_data, correct = FALSE)
 chi_squared_result
@@ -43,7 +45,6 @@ expected_counts
 observed <- as.vector(survey_data)
 expected <- as.vector(expected_counts)
 G2 <- 2 * sum(observed * log(observed / expected))
-G2
 
 # Print results
 cat("Pearson's Chi-squared statistic (X^2):", chi_squared_result$statistic, "\n")
@@ -58,8 +59,11 @@ if (chi_squared_result$p.value < 0.05) {
 }
 
 ```
-# Exercise 1.3
-```{r, echo=FALSE}
+From the output above we can see that the test statistics are large with small p-values (less than 0.01). This provides strong evidence against the null hypothesis of independence, indicating a significant association between gender and their opinions toward legal abortion.
+
+## Task3
+Next we calculate the odds ratio for women and men.
+```{r}
 # Calculate odds for women and men
 odds_women <- survey_data[1, 1] / survey_data[1, 2]
 odds_men <- survey_data[2, 1] / survey_data[2, 2]
@@ -93,17 +97,16 @@ if (1 < ci_lower || 1 > ci_upper) {
   cat("Interpretation: The odds of being in favor of legal abortion do not significantly differ between women and men.\n")
 }
 ```
+- The calculation uses **manual formulas** for:
+  - OR: \( \frac{(a \cdot d)}{(b \cdot c)} \)
+  - Standard Error (SE): \( \sqrt{\frac{1}{a} + \frac{1}{b} + \frac{1}{c} + \frac{1}{d}} \)
+  - CI: Based on the standard normal approximation (\(1.96 \times SE\)).
 
-1. **Odds Calculation**: The odds for women and men are calculated as \( \text{In favor} / \text{Against} \) for each group.
-2. **Odds Ratio**: The odds ratio is the ratio of the odds for women to the odds for men.
-3. **Confidence Interval**: 
-   - The log of the odds ratio is used to calculate the confidence interval, as the log odds follow a normal distribution.
-   - The standard error of the log odds ratio is computed using the formula \( \sqrt{1/a + 1/b + 1/c + 1/d} \), where \( a, b, c, d \) are the cell counts.
-   - The confidence interval is transformed back to the odds ratio scale.
-4. **Interpretation**: Based on the confidence interval, it is concluded whether the odds differ significantly between the two groups.
+From the output above we can see that the estimated odds ratio is OR = 1.425085 with a 95% C.I as (1.119477, 1.814121). This suggests that women are more likely than men to support legal abortion. Furthermore, the C.I does not include 1, which supports that the difference is statistically significant.
 
-# Exercise1.4
-```{r,echo=FALSE}
+# Task4
+Next we calculate the risk ratio for women and men.
+```{r}
 # Calculate risks (probabilities of being in favor)
 risk_women <- survey_data[1, 1] / women_total
 risk_men <- survey_data[2, 1] / men_total
@@ -137,18 +140,46 @@ if (1 < ci_lower || 1 > ci_upper) {
   cat("Interpretation: The relative risk of being in favor of legal abortion does not significantly differ between women and men.\n")
 }
 ```
-### Why Do the Results Differ?
-- **Odds Ratio vs Risk Ratio**:
-  - Odds Ratio compares the relative odds (favor vs oppose), focusing on the ratio of proportions within each group.
-  - Risk Ratio compares the direct probabilities (favor/total), reflecting absolute differences between groups.
+  - Risk Ratio:
+    \[
+    RR = \frac{\text{Risk for Women}}{\text{Risk for Men}}
+    \]
+  - Confidence Interval:
+    \[
+    CI = \text{exp}\left[\log(RR) \pm 1.96 \cdot SE\right]
+    \]
+    where:
+    \[
+    SE = \sqrt{\frac{1}{a} - \frac{1}{a+b} + \frac{1}{c} - \frac{1}{c+d}}
+    \]
+    
+From the output above we can see that the estimated risk ratio RR = 1.162382 with a 95% C.I as (1.049742, 1.287109). This suggests that women’s relative risk of being in favor of legal abortion is 1.162 times that of men. Furthermore, the C.I does not include 1, which supports that the difference is statistically significant relative to gender.
+## Task5
+### Run the code given by the file to address Q1-4
+```{r}
+#Generate a frequency table and calculate row percentage
+tab1<- as.table(rbind(c(309, 191), c(319, 281)))
+dimnames(tab1) <- list(gender = c("women", "men"),opinion = c("favor","against"))
+addmargins(tab1)
+addmargins(prop.table(tab1,1),2)
 
-- **Sensitivity to Data Range**:
-  - When the probabilities (risks) are above 50%, the odds tend to exaggerate differences compared to the risk. In this case, women (61.8%) and men (67.6%) have relatively high probabilities, making OR and RR diverge.
-
----
-### Conclusion:
-- If the research question focuses on **relative tendencies or odds**, **Odds Ratio** is appropriate, suggesting that women are more inclined to favor legal abortion.
-- If the focus is on **absolute differences in proportions**, **Risk Ratio** is more intuitive, showing no significant difference between women and men.
+#Calculate X2, G2 and p-values
+chisq.test(tab1,correct=FALSE)
+library(MASS) 
+loglm(~gender+opinion,tab1)
+```
+The test statistics are equal to the results generated form the basic R code, which also indicates a significant association between gender and the opinions toward legal abortion.
+```{r}
+#Calculate odds ratio and confidence interval
+library(epitools) 
+oddsratio(tab1, method = "wald", rev="neither")$measure
+```
+Both the basic R calculation and the `oddsratio()` function provide similar results for the **Odds Ratio (OR)**, but there are small differences in the confidence interval (CI) and methodological details. Differences are due to implementation precision, but they are negligible and do not impact the interpretation.
+```{r}
+#Calculate risk ratio and confidence interval
+riskratio(tab1,rev="both")$measure
+```
+Both the basic R calculation and the `riskratio()` function provide similar results for the **Risk Ratio (RR)**, but there are small differences in the confidence interval (CI) and methodological details. Differences are due to implementation precision, but they are negligible and do not impact the interpretation.
 
 # Exercise 1:2
 
@@ -156,7 +187,7 @@ if (1 < ci_lower || 1 > ci_upper) {
 
 First we enter the given data in R and generate a contingency table.
 
-```{r, echo = FALSE}
+```{r}
 tab2 <- as.table(rbind(c(557, 1835 - 557), c(1198, 2691 - 1198)))
 dimnames(tab2) <- list(gender = c("women", "men"), admission = c("admitted", "not admitted"))
 addmargins(tab2)
@@ -165,7 +196,7 @@ addmargins(prop.table(tab2, 1), 2)
 
 Next, we want to do make the same analysis as in Exercise 1:1. Firstly we can test whether there is an association between gender and admission using $\chi^2$ and $G^2$ statistics.
 
-```{r, echo = FALSE}
+```{r}
 library(MASS)
 
 # Calculate chi-sq statistic, LR statistic and p-values
@@ -176,7 +207,7 @@ From the output above we can see that the test statistics are large with small p
 
 Next, we calculate the odds ratio of admission for men relative relative to women.
 
-```{r, echo = FALSE}
+```{r}
 library(epitools)
 
 # Calculate the odds ratio
@@ -187,7 +218,7 @@ From the output above we can see that the estimated odds ratio is $\text{OR} = 1
 
 Lastly, we compute the risk ratio for men relative to women.
 
-```{r, echo = FALSE}
+```{r}
 # Calculate the risk ratio
 riskratio(tab2, rev = "col")$measure
 ```
@@ -197,7 +228,7 @@ From the output above we can see that the estimate risk ratio $\text{RR} = 1.467
 ## Task 2
 The next task is to investigate the effect of replacing all values in the contingency table with one-tenth of the original values, and then comment on what we observe.
 
-```{r, echo = FALSE}
+```{r}
 tab2_2 <- round(tab2 / 10)
 addmargins(tab2_2)
 addmargins(prop.table(tab2_2, 1), 2)
@@ -213,7 +244,7 @@ First we observe that the Pearson's and LR statistics values change by $1/10$, w
 
 Next, we repeat by replacing the numbers with one hundredth of the original values.
 
-```{r, echo = FALSE}
+```{r}
 tab2_2 <- round(tab2_2 / 10)
 addmargins(tab2_2)
 addmargins(prop.table(tab2_2, 1), 2)
@@ -246,7 +277,7 @@ $$
 
 To satisfy the second condition, we need larger $n_{ij}$, as larger sample sizes increase statistical power, making small imbalances more likely to yield significant results. With the reasoning above, we construct the following contingency table
 
-```{r, echo = FALSE}
+```{r}
 tab3 <- as.table(rbind(c(200000, 199000), c(199000, 200000)))
 dimnames(tab3) <- list(group = c("Group 1", "Group 2"), outcome = c("Outcome 1", "Outcome 2"))
 
@@ -256,7 +287,7 @@ oddsratio(tab3, method = "wald")$measure
 
 From above, we observe that the sample odds ratio satisfies the first condition, with $\hat{\theta} \approx 1.01$. Next, we test whether the second condition holds.
 
-```{r, echo = FALSE}
+```{r}
 loglm(~group + outcome, tab3)
 ```
 
@@ -264,3 +295,5 @@ The test output shows that the null hypothesis of independence is rejected at th
 
 ### Comments on Above Results
 The results above highlights the fact that statistical tests are sensitive to small imbalances when sample sizes are large, even if the sample odds ratio is weak. In the case above, the sample odds ratio indicates that there is no association, yet the large sample size leads to a significant test. This demonstrates that statistical significance does not always equate to practical relevance, which is why relying solely on statistical significance can be misleading in cases like the one above. Instead, both the sample odds ratio and the tests should be included when reporting the results, whilst weighing the relevance of the test.
+
+
