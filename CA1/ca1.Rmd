@@ -11,7 +11,8 @@ output: pdf_document
 Calculate the percentage in favor and against legal abortion for men and women separately.
 ```{r}
 survey_data<- as.table(rbind(c(309, 191), c(319, 281)))
-dimnames(survey_data) <- list(gender = c("women", "men"),opinion = c("favor","against"))
+dimnames(survey_data) <- list(gender = c("women", "men"),
+                              opinion = c("favor","against"))
 
 women_in_favor <- survey_data[1,1]
 men_in_favor <- survey_data[1,2]
@@ -27,8 +28,10 @@ men_percent_in_favor <- (men_in_favor / men_total) * 100
 men_percent_against <- 100 - men_percent_in_favor
 
 # Print results
-cat("Women: In favor =", women_percent_in_favor, "%, Against =", women_percent_against, "%\n")
-cat("Men: In favor =", men_percent_in_favor, "%, Against =", men_percent_against, "%\n")
+cat("Women: In favor =", women_percent_in_favor, 
+    "%, Against =", women_percent_against, "%\n")
+cat("Men: In favor =", men_percent_in_favor, 
+    "%, Against =", men_percent_against, "%\n")
 
 ```
 The proportion of women who are in favor of legal abortion is evidently larger than men's.
@@ -54,9 +57,11 @@ cat("P-value (from Chi-squared test):", chi_squared_result$p.value, "\n")
 
 # Conclusion
 if (chi_squared_result$p.value < 0.05) {
-  cat("Conclusion: Reject the null hypothesis.", "\n", "There is a significant association between gender and opinion on legal abortion.")
+  cat("Conclusion: Reject the null hypothesis.", "\n", "There is a significant 
+      association between gender and opinion on legal abortion.")
 } else {
-  cat("Conclusion: Fail to reject the null hypothesis.", "\n", "There is no significant association between gender and opinion on legal abortion.")
+  cat("Conclusion: Fail to reject the null hypothesis.", "\n", "There is no 
+      significant association between gender and opinion on legal abortion.")
 }
 
 ```
@@ -93,9 +98,11 @@ cat("95% Confidence Interval for Odds Ratio: [", ci_lower, ",", ci_upper, "]\n")
 
 # Interpretation
 if (1 < ci_lower || 1 > ci_upper) {
-  cat("Interpretation: The odds of being in favor of legal abortion", "\n", "significantly differ between women and men.\n")
+  cat("Interpretation: The odds of being in favor of legal abortion", 
+      "\n", "significantly differ between women and men.\n")
 } else {
-  cat("Interpretation: The odds of being in favor of legal abortion", "\n", "do not significantly differ between women and men.\n")
+  cat("Interpretation: The odds of being in favor of legal abortion", 
+      "\n", "do not significantly differ between women and men.\n")
 }
 ```
 - The calculation uses **manual formulas** for:
@@ -136,9 +143,11 @@ cat("95% Confidence Interval for Risk Ratio: [", ci_lower, ",", ci_upper, "]\n")
 
 # Interpretation
 if (1 < ci_lower || 1 > ci_upper) {
-  cat("Interpretation: The relative risk of being in favor of legal abortion", "\n", "significantly differs between women and men.\n")
+  cat("Interpretation: The relative risk of being in favor of legal abortion", 
+      "\n", "significantly differs between women and men.\n")
 } else {
-  cat("Interpretation: The relative risk of being in favor of legal abortion", "\n" "does not significantly differ between women and men.\n")
+  cat("Interpretation: The relative risk of being in favor of legal abortion", 
+      "\n", "does not significantly differ between women and men.\n")
 }
 ```
   - Risk Ratio:
@@ -160,7 +169,8 @@ From the output above we can see that the estimated risk ratio RR = 1.162382 wit
 ```{r}
 #Generate a frequency table and calculate row percentage
 tab1<- as.table(rbind(c(309, 191), c(319, 281)))
-dimnames(tab1) <- list(gender = c("women", "men"),opinion = c("favor","against"))
+dimnames(tab1) <- list(gender = c("women", "men"),
+                       opinion = c("favor","against"))
 addmargins(tab1)
 addmargins(prop.table(tab1,1),2)
 
@@ -188,9 +198,10 @@ Both the basic R calculation and the `riskratio()` function provide similar resu
 
 First we enter the given data in R and generate a contingency table.
 
-```{r, echi = FALSE}
+```{r, ech0 = FALSE}
 tab2 <- as.table(rbind(c(557, 1835 - 557), c(1198, 2691 - 1198)))
-dimnames(tab2) <- list(gender = c("women", "men"), admission = c("admitted", "not admitted"))
+dimnames(tab2) <- list(gender = c("women", "men"),
+                       admission = c("admitted", "not admitted"))
 addmargins(tab2)
 addmargins(prop.table(tab2, 1), 2)
 ```
@@ -280,7 +291,8 @@ To satisfy the second condition, we need larger $n_{ij}$, as larger sample sizes
 
 ```{r, echo = FALSE}
 tab3 <- as.table(rbind(c(200000, 199000), c(199000, 200000)))
-dimnames(tab3) <- list(group = c("Group 1", "Group 2"), outcome = c("Outcome 1", "Outcome 2"))
+dimnames(tab3) <- list(group = c("Group 1", "Group 2"),
+                       outcome = c("Outcome 1", "Outcome 2"))
 
 oddsratio(tab3, method = "wald")$data
 oddsratio(tab3, method = "wald")$measure
