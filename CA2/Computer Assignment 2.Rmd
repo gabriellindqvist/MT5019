@@ -6,7 +6,7 @@ output: pdf_document
 ---
 # Exercise2:1
 
-Data on periodontitis (severe infammation of the gums)were collected from a group of adult patients at a large dental clinic.The patients were compared with a group of adult people with normal gums who visited the same clinic.The individuals in both groups were interviewed about the use of dental floss in the last five years,with the following result:
+Data on periodontitis (severe infammation of the gums) were collected from a group of adult patients at a large dental clinic.The patients were compared with a group of adult people with normal gums who visited the same clinic.The individuals in both groups were interviewed about the use of dental floss in the last five years,with the following result:
 ```{r}
 tab1<- as.table(rbind(c(22, 75), c(148, 265)))
 dimnames(tab1) <- list("Regularly use of dental floss" = c("Yes", "No"),Periodontitis = c("Yes","No"))
@@ -249,7 +249,7 @@ data22 <- data.frame(logdos,x,n)
 data22
 ```
 ## Task1
-Estimate for each dose separately the risk (probability)to develop a lung tumor. Make a plot of the risk against log(dos).Calculate the logodds for tumor and plot it against log(dose).Seems the logistic regression model appropriate for these data?
+Estimate for each dose separately the risk (probability)to develop a lung tumor. Make a plot of the risk against log(dos). Calculate the logodds for tumor and plot it against log(dose).Seems the logistic regression model appropriate for these data?
 
 
 The risk (or probability) of developing a lung tumor is calculated as:
@@ -349,6 +349,7 @@ Find the covariance matrix for the estimates and assess if they are correlated.F
 ```{r}
 vcov(model)
 confint.default(model,level=0.95)
+corr <- vcov(model)[1, 2] / sqrt(vcov(model)[1, 1] * vcov(model)[2, 2])
 ```
 **Covariance** and **correlation**:
    - The covariance between `(Intercept)` and `logdos` is `0.0144`, indicating a small linear relationship between the two parameters. This suggests limited correlation between the intercept and the dose effect.
