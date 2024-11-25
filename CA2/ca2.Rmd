@@ -1,0 +1,10 @@
+---
+title: "Computer Assignment 2"
+author: "Gabriel Lindqvist, Jiahui Li"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+# Exercise 2:1
+
+# Exercise 2:2
