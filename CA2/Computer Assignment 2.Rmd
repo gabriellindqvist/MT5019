@@ -7,160 +7,202 @@ output: pdf_document
 # Exercise2:1
 
 Data on periodontitis (severe infammation of the gums) were collected from a group of adult patients at a large dental clinic.The patients were compared with a group of adult people with normal gums who visited the same clinic.The individuals in both groups were interviewed about the use of dental floss in the last five years,with the following result:
-```{r}
+```{r, echo = FALSE}
 tab1<- as.table(rbind(c(22, 75), c(148, 265)))
 dimnames(tab1) <- list("Regularly use of dental floss" = c("Yes", "No"),Periodontitis = c("Yes","No"))
 addmargins(tab1)
 addmargins(prop.table(tab1,1),2)
 ```
-## Task1
+## Task 1
 The problem asks us to analyze the relationship between regular dental floss use and the occurrence of periodontitis (gum disease) using a logistic regression model. The data provided include counts of individuals categorized by whether they regularly use dental floss (Yes/No) and whether they have periodontitis (Yes/No). The logistic regression model is specified as:
 
-\[
-\text{logit}(p_x) = \beta_0 + \beta_1 x
-\]
+$$
+\text{logit}(p_x) = \beta_0 + \beta_1 x,
+$$
 
-Where:
-- \(x = 1\) if the individual regularly uses dental floss, \(x = 0\) otherwise.
-- \(p_x = P(\text{periodontitis} \mid x)\), the probability of having periodontitis given the flossing status.
+where
 
-The task is to:
-1. Estimate the parameters \(\beta_0\) and \(\beta_1\).
-2. Interpret these parameters in the context of the data.
+- $x = 1$ if the individual regularly uses dental floss, $x = 0$ otherwise.
+- $p_x = P(\text{periodontitis} \mid x$, the probability of having periodontitis given the flossing status.
 
-```{r}
+The task is to answer the following questions: 
+
+1. Which parameters in the model can be estimated considering how the data is collected?
+2. What estimates do you get and how do you interpret them?
+
+To answer the first question, we start by analyzing the data found in the contingency table above. Firstly, all cell counts in the contingency table seems sufficient. That is, all cell counts are non-zero and are fairly large, indicating that there should be no issues in estimating $\beta_0$ and $\beta_1$. However, the group of individuals who regularly use dental floss is relatively under-sampled compared to the individuals who do not use dental floss (97 vs 413). This impacts the precision of the estimates for the effect of floss and could limit the statistical power to detect an association between floss use and periodontitis.
+
+In order to answer the second question, we fit a logistic regression and study the estimates.
+
+```{r, echo = FALSE}
 # Convert the table into a dataset for logistic regression
 use<-c("no","no", "yes","yes")
 per<-c("no","yes","no","yes")
 n<-c(265,148,75,22)
 data21 <- data.frame(use,per,n)
-data21
 ```
 
-```{r}
+```{r, echo = FALSE}
 #Fit a logistic regression model
 data21$use <- as.factor(data21$use)
 data21$per <- as.factor(data21$per)
 model21<-glm(per~use, weights =n, family = binomial(link=logit), data=data21)
 summary(model21)
 ```
-#### 1.From the output, we obtain:
-- Intercept: \(\beta_0 = -0.5825\)
-- Slope: \(\beta_1 = -0.6439\) (effect of `useyes` relative to `useno`)
+
+From the summary we get the following estimates:
+
+- Intercept: $\beta_0 = -0.5825$
+- Slope: $\beta_1 = -0.6439$
 
 Substituting these into the model:
-\[
+$$
 \text{logit}(p_x) = -0.5825 - 0.6439 \cdot x
-\]
+$$
 
-#### 2. Interpretation of the Parameters
+Next, we want to interpret the parameters.
+
 - **Intercept (\(\beta_0 = -0.5825\))**:  
   When \(x = 0\) (no regular floss use), the log-odds of having periodontitis is \(-0.5825\). Converting this to a probability:
   \[
   P(\text{Periodontitis} \mid \text{use = no}) = \frac{\exp(-0.5825)}{1 + \exp(-0.5825)} \approx 0.358
   \]
-  **Interpretation**: For individuals who do not floss regularly, the probability of having periodontitis is approximately 35.8%.
+  **Interpretation**: For individuals who do not floss regularly, the probability of having periodontitis is approximately 35.8%. 
 
 - **Slope (\(\beta_1 = -0.6439\))**:  
-  When \(x = 1\) (regular floss use), the log-odds of periodontitis decreases by 0.6439. Converting this to an odds ratio (OR):
+  When \(x = 1\) (regular floss use), the log-odds of periodontists decreases by 0.6439 for individuals who regularly floss compared to those who do not. Converting this to an odds ratio (OR):
   \[
   \text{OR} = \exp(-0.6439) \approx 0.525
   \]
-  **Interpretation**: Individuals who floss regularly are 52.5% as likely to have periodontitis compared to those who do not floss regularly. This indicates that regular flossing reduces the odds of periodontitis by approximately 47.5%.
+  **Interpretation**: Regular flossing reduces the odds of periodontitis approximately 47.5%.
 
-#### 3. Statistical Significance of the Parameters
+#### Statistical Significance of the Parameters
+
 - **Intercept (\(\beta_0\))**: The \(p\)-value (\(< 0.001\)) shows that the baseline odds of periodontitis for individuals who do not floss regularly is statistically significant.
+
 - **Slope (\(\beta_1\))**: The \(p\)-value (\(0.0145\)) indicates that the effect of flossing on the odds of periodontitis is statistically significant at the 5% level.
 
-#### 4. Summary of Results
+#### Summary of Results
+
 - **Regular floss use significantly reduces the likelihood of periodontitis**: The negative slope (\(\beta_1\)) and odds ratio (\(0.525\)) suggest that regular flossing is associated with a significant reduction in the odds of periodontitis by approximately 47.5%.
+
 - **Baseline risk for non-floss users**: Individuals who do not floss regularly have a periodontitis probability of 35.8%.
 
 In conclusion, regular flossing has a statistically significant protective effect against periodontitis, as shown by the model (\(p = 0.0145\)).
 
 
-## Task2
-This question asks us to fit a logistic regression model for the probability of **using dental floss** as a function of periodontitis status. The logistic regression model is specified as:
+## Task 2
+The task is to explore the same questions found in **Task 1** but now we fit a logistic regression model for the probability of **using dental floss** as a function of periodontitis status. The logistic regression model is specified as:
 
 \[
-\text{logit}(p_y) = \gamma_0 + \gamma_1 y
+\text{logit}(p_y) = \gamma_0 + \gamma_1 y, 
 \]
 
-Where:
+where
+
 - \(y = 1\) if the individual has periodontitis, and \(y = 0\) otherwise.
 - \(p_y = P(\text{using dental floss} \mid y)\), the probability of using dental floss given the periodontitis status.
 
-```{r}
+Regarding the first question, $\gamma_0$ and $\gamma_1$ can both be estimated in this study because the contingency provides sufficient information for the model to estimate these parameters (as established in the previous task).
+
+Next, we fit the logistic regression model to get our estimates.
+
+```{r, echo = FALSE}
 # Fit a logistic regression model with periodontitis status as the predictor
 model22 <- glm(use ~ per, weights = n, family = binomial(link = logit), data = data21)
 
 # Display the summary of the model
 summary(model22)
 ```
-#### 1.From the output, we obtain:
+
+From the summary we get the following estimates:
+
 - Intercept: \(\gamma_0 = -1.2622\)
 - Slope: \(\gamma_1 = -0.6439\) (effect of `peryes` relative to `perno`)
 
 Substituting these into the model:
+
 \[
-\text{logit}(p_x) = -1.2622 - 0.6439 \cdot x
+\text{logit}(p_x) = -1.2622 - 0.6439 \cdot x.
 \]
 
-#### 2. Interpretation of the Parameters
+Next, we want to interpret these estimates.
+
 - **Intercept (\(\gamma_0 = -1.2622\))**:  
-  When \(y = 0\) (no periodontitis), the log-odds of regular floss use is \(-1.2622\).   Converting this to a probability:
+  When \(y = 0\) (no periodontitis), the log-odds of regular floss use is \(-1.2622\). Converting this to a probability:
   \[
-  P(\text{using floss} \mid y = 0) = \frac{\exp(-1.2622)}{1 + \exp(-1.2622)} \approx 0.22
+  P(\text{using floss} \mid y = 0) = \frac{\exp(-1.2622)}{1 + \exp(-1.2622)} \approx 0.22.
   \]
-  **Interpretation**: Individuals without periodontitis have approximately a **22% probability of using dental floss**.
+  **Interpretation**: Individuals without periodontitis have approximately a 22% probability of using dental floss.
 
 - **Slope (\(\gamma_1 = -0.6439\))**
   When \(y = 1\) (periodontitis is present), the log-odds of using dental floss decreases by 0.6439.
-Converting this to an **odds ratio (OR)**:
+Converting this to an odds ratio (OR):
   \[
   \text{OR} = \exp(-0.6439) \approx 0.525
   \]
-  **Interpretation**: Individuals with periodontitis are **52.5% as likely** to use dental floss compared to those without periodontitis. In other words, the presence of periodontitis is associated with a lower likelihood of using dental floss.
+  **Interpretation**: Individuals with periodontitis are 52.5% as likely to use dental floss compared to those without periodontitis. In other words, the presence of periodontitis is associated with a lower likelihood of using dental floss.
 
-#### 3. Statistical Significance of the Parameters
+#### Statistical Significance of the Parameters
+
 - **Intercept (\(\gamma_0\))**:
   - \(p < 0.001\): The intercept is significant, indicating that the baseline odds of using dental floss for individuals without periodontitis is significantly below 50%.
+
 - **Slope (\(\gamma_1\))**:
   - \(p = 0.0145\): The slope is significant, meaning periodontitis status has a statistically significant effect on the probability of using dental floss.
 
-#### 4. Summary of Results
-**Individuals without periodontitis**:
-   - The probability of using dental floss is approximately **22%**.
-**Individuals with periodontitis**:
-   - They are **52.5% as likely** to use dental floss compared to those without periodontitis.
-**The effect of periodontitis on floss use is statistically significant**:
-   - \(p = 0.0145\): Indicates a significant relationship between periodontitis status and floss usage behavior.
-**Unexpected finding**:
-   - Contrary to expectations, individuals with periodontitis are less likely to use dental floss. This contradicts common assumptions (e.g., individuals with gum disease might be more likely to adopt dental care habits) and warrants further investigation into behavioral patterns or data collection factors.
+#### Summary of Results
 
-## Task3
-This question asks us to:
+**Individuals without periodontitis**:
+
+- The probability of using dental floss is approximately **22%**.
+
+**Individuals with periodontitis**:
+
+- They are **52.5% as likely** to use dental floss compared to those without periodontitis.
+
+**The effect of periodontitis on floss use is statistically significant**:
+
+- \(p = 0.0145\): Indicates a significant relationship between periodontitis status and floss usage behavior.
+
+**Unexpected finding**:
+
+- Contrary to expectations, individuals with periodontitis are less likely to use dental floss. This contradicts common assumptions (e.g., individuals with gum disease might be more likely to adopt dental care habits) and warrants further investigation into behavioral patterns or data collection factors.
+
+## Task 3
+
+In this task we want to explore the following:
+
 1. Show how the parameter estimates (\(\beta_1\) and \(\gamma_1\)) from both models (from Questions 1 and 2) can be derived using the actual numbers in the contingency table.
+
 2. Prove that \(\beta_1 = \gamma_1\).
 
 ---
 
 ### Step 1: Recap of the Models
 
-#### **Model 1** (Question 1):
+#### Model 1 (Question 1):
+
 \[
-\text{logit}(p_x) = \beta_0 + \beta_1 x
+\text{logit}(p_x) = \beta_0 + \beta_1 x,
 \]
-Where:
+
+where
+
 - \(x = 1\) (regular dental floss use), \(x = 0\) (no dental floss use).
+
 - \(p_x = P(\text{Periodontitis} \mid x)\).
 
-#### **Model 2** (Question 2):
+#### Model 2 (Question 2):
+
 \[
-\text{logit}(p_y) = \gamma_0 + \gamma_1 y
+\text{logit}(p_y) = \gamma_0 + \gamma_1 y,
 \]
-Where:
+
+where
+
 - \(y = 1\) (Periodontitis present), \(y = 0\) (No periodontitis).
+
 - \(p_y = P(\text{Using Floss} \mid y)\).
 
 ---
@@ -179,40 +221,58 @@ The contingency table provides the following counts:
 
 ### Step 3: Express \(\beta_1\) and \(\gamma_1\) Using the Table
 
-#### **For \(\beta_1\) (Model 1)**:
+#### For \(\beta_1\) (Model 1):
+
 The logistic regression for Model 1 calculates the odds ratio of periodontitis (\(P(\text{Periodontitis} \mid \text{Floss})\)) for floss users versus non-users. From the table:
+
 - Odds of periodontitis for floss users:
+  
   \[
   \text{Odds}_\text{Yes} = \frac{22}{75}
   \]
+
 - Odds of periodontitis for non-floss users:
+  
   \[
   \text{Odds}_\text{No} = \frac{148}{265}
   \]
+
 - Odds ratio (OR):
+  
   \[
   \text{OR} = \frac{\text{Odds}_\text{Yes}}{\text{Odds}_\text{No}} = \frac{\frac{22}{75}}{\frac{148}{265}} = \frac{22 \cdot 265}{75 \cdot 148}
   \]
+
 - Log odds ratio (\(\beta_1\)):
+  
   \[
   \beta_1 = \log(\text{OR}) = \log\left(\frac{22 \cdot 265}{75 \cdot 148}\right)
   \]
 
-#### **For \(\gamma_1\) (Model 2)**:
+#### For \(\gamma_1\) (Model 2):
+
 The logistic regression for Model 2 calculates the odds ratio of floss use (\(P(\text{Floss} \mid \text{Periodontitis})\)) for individuals with periodontitis versus those without. From the table:
+
 - Odds of floss use for individuals with periodontitis:
+  
   \[
   \text{Odds}_\text{Yes} = \frac{22}{148}
   \]
+
 - Odds of floss use for individuals without periodontitis:
+  
   \[
   \text{Odds}_\text{No} = \frac{75}{265}
   \]
+
 - Odds ratio (OR):
+  
   \[
   \text{OR} = \frac{\text{Odds}_\text{Yes}}{\text{Odds}_\text{No}} = \frac{\frac{22}{148}}{\frac{75}{265}} = \frac{22 \cdot 265}{148 \cdot 75}
   \]
+  
 - Log odds ratio (\(\gamma_1\)):
+  
   \[
   \gamma_1 = \log(\text{OR}) = \log\left(\frac{22 \cdot 265}{75 \cdot 148}\right)
   \]
@@ -222,10 +282,13 @@ The logistic regression for Model 2 calculates the odds ratio of floss use (\(P(
 ### Step 4: Prove \(\beta_1 = \gamma_1\)
 
 By the definitions above, both \(\beta_1\) and \(\gamma_1\) are calculated as:
+
 \[
 \log\left(\frac{22 \cdot 265}{75 \cdot 148}\right)
 \]
+
 Thus, we have:
+
 \[
 \beta_1 = \gamma_1
 \]
@@ -238,9 +301,10 @@ This equality occurs because the odds ratio for Model 1 (Periodontitis as a func
 
 The parameter estimates (\(\beta_1\) from Model 1 and \(\gamma_1\) from Model 2) are equal because they are both derived from the same odds ratio in the contingency table. This demonstrates the symmetry of logistic regression in cases like this, where the relationship between two binary variables is analyzed.
 
-# Exercise2:2
-In an experiment,165 mice were exposed to various doses of bensoapyren (BaP)over a ten month period.It was then examined how many of the mice that has developed a lung tumor.The result as a function of logarithmic dose is:
-```{r}
+# Exercise 2:2
+In an experiment,165 mice were exposed to various doses of bensoapyren (BaP) over a ten month period.It was then examined how many of the mice that has developed a lung tumor.The result as a function of logarithmic dose is:
+
+```{r, echo = FALSE}
 #Input data and create a data frame
 logdos<-c(-7.60,-6.22,-4.60,-3.00,-1.39,0.92)
 n<-c(18,19,28,32,28,40)
@@ -248,9 +312,9 @@ x<-c(1,2,4,9,12,32)
 data22 <- data.frame(logdos,x,n)
 data22
 ```
-## Task1
-Estimate for each dose separately the risk (probability)to develop a lung tumor. Make a plot of the risk against log(dos). Calculate the logodds for tumor and plot it against log(dose).Seems the logistic regression model appropriate for these data?
 
+## Task 1
+Estimate for each dose separately the risk (probability) to develop a lung tumor. Make a plot of the risk against log(dos). Calculate the logodds for tumor and plot it against log(dose).Seems the logistic regression model appropriate for these data?
 
 The risk (or probability) of developing a lung tumor is calculated as:
 \[
@@ -261,7 +325,10 @@ The log-odds (logits) are calculated as:
 \[
 \text{Log-Odds} = \log\left(\frac{\text{Risk}}{1 - \text{Risk}}\right)
 \]
-```{r}
+
+We start by calculating the risk and log-odds and add them as two seperate columns into our dataframe. 
+
+```{r, echo = FALSE}
 # Calculate risk (probability)
 data22$risk <- data22$x / data22$n
 # Calculate log-odds
@@ -269,16 +336,18 @@ data22$log_odds <- log(data22$risk / (1 - data22$risk))
 print(data22)
 ```
 
-```{r}
+Next, we plot the calculated risk and log-odds against log(dose) separately
+
+```{r, echo = FALSE}
 # Plot risk against log(dose)
-plot(data22$logdos, data22$risk, type = "b", pch = 19, xlab = "Log(Dose)", ylab = "Risk", main = "Risk vs Log(Dose)")
-
+plot(data22$logdos, data22$risk, type = "b", pch = 19, xlab = "log(dose)", ylab = "Risk", main = "Risk vs log(dose)")
 ```
-```{r}
+```{r, echo = FALSE}
 # Plot log-odds against log(dose)
-plot(data22$logdos, data22$log_odds, type = "b", pch = 19, xlab = "Log(Dose)", ylab = "Log-Odds", main = "Log-Odds vs Log(Dose)")
-
+plot(data22$logdos, data22$log_odds, type = "b", pch = 19, xlab = "log(Dose)", ylab = "log-odds", main = "log-odds vs log(dose)")
 ```
+
+
 Seems the logistic regression model appropriate for these data?
 
 **Data Characteristics**:  
@@ -286,28 +355,34 @@ Seems the logistic regression model appropriate for these data?
 **Linear Trend of Log-Odds**:  
    From the plotted relationship between Log-Odds and Log(Dose), a linear trend is observed, it further supports the applicability of the logistic regression model.
 
-## Task2
+## Task 2
 Fit a logistic regression model to this data and interpret the parameter estimates, particularly the slope parameter.
-```{r}
+
+We start by fitting the logistic regression model.
+
+```{r, echo = FALSE}
 # Fit a logistic regression model
 model <- glm(cbind(x, n - x) ~ logdos, data = data22, family = binomial(link = logit))
 
 # Model summary
 summary(model)
 ```
-```{r}
+
+Next, we visualize by adding fitted values to the previous log-odds vs log(dose) plot.
+
+```{r, echo = FALSE}
 # Add fitted values to the plot of log-odds
-plot(data22$logdos, data22$log_odds, type = "b", pch = 19, xlab = "Log(Dose)", ylab = "Log-Odds", main = "Log-Odds vs Log(Dose)")
+plot(data22$logdos, data22$log_odds, type = "b", pch = 19, xlab = "log(dose)", ylab = "log-odds", main = "log-odds vs log(dose)")
 lines(data22$logdos, predict(model, type = "link"), col = "red")
 ```
-### 1. **Graph Observation: Log-Odds vs Log(Dose)**
 
-- The black dots represent the calculated log-odds for each dose, while the red curve shows the fitted logistic regression model.
-- **Linear Trend**: The relationship between Log-Odds and Log(Dose) appears approximately linear, and the red fitted curve aligns closely with the black dots. This indicates that the assumption of linearity between Log-Odds and Log(Dose) holds, making the logistic regression model appropriate for the data.
+### Graph Observation: log-odds vs log(dose)
 
-### 2. **Model Output Interpretation**
+- **Linear Trend**: The relationship between log-odds and log(dose) appears approximately linear, and the fitted line aligns closely with the black dots. This indicates that the assumption of linearity between log-odds and log(dose) holds, making the logistic regression model appropriate for the data.
 
-#### **Coefficients**
+### Model Summary Interpretation
+
+#### Coefficients
 - **Intercept (\( \beta_0 = 0.687 \))**:
   - When Log(Dose) is 0 (i.e., the dose is 1), the log-odds of developing a tumor is 0.687.
   - Converting to probability:
@@ -324,10 +399,10 @@ lines(data22$logdos, predict(model, type = "link"), col = "red")
     \]
     **Interpretation**: For every one-unit increase in Log(Dose), the odds of developing a tumor increase by approximately 68.2%.
 
-#### **Significance**
+#### Significance
 - The p-value for the intercept is \(p = 0.00764\), and for the slope, \(p < 0.001\), indicating that both are statistically significant. This shows that Log(Dose) has a significant effect on tumor development.
 
-### 3. **Model Fit**
+#### Model Fit
 - **Residual Deviance (1.2416)**:
   - The residual deviance is much smaller than the null deviance (56.5321), indicating that the model fits the data well.
 - **Degrees of Freedom**:
@@ -335,7 +410,7 @@ lines(data22$logdos, predict(model, type = "link"), col = "red")
 - **AIC (24.024)**:
   - A low AIC value indicates that the model is both parsimonious and provides a good fit to the data.
 
-### 4. **Conclusion**
+### Conclusion
 
 1. **Suitability of the Logistic Regression Model**:
    - The relationship between Log-Odds and Log(Dose) is linear.
@@ -344,30 +419,65 @@ lines(data22$logdos, predict(model, type = "link"), col = "red")
 2. **Relationship Between Dose and Tumor Development**:
    - Higher doses (Log(Dose)) significantly increase the probability of tumor development (\(\beta_1 > 0\)).
 
-## Task3
-Find the covariance matrix for the estimates and assess if they are correlated.Find a 95 confidence interval for the parameters.Find a 95 confidence interval for the tumor risk at dose 0.25 (log(dose)=-1.39).
-```{r}
+## Task 3
+Find the covariance matrix for the estimates and assess if they are correlated. Find a 95% confidence interval for the parameters. Find a 95 confidence interval for the tumor risk at dose 0.25 (log(dose)=-1.39)).
+
+We start by assessing whether the estimates are correlated
+
+```{r, echo = FALSE}
 vcov(model)
-confint.default(model,level=0.95)
 corr <- vcov(model)[1, 2] / sqrt(vcov(model)[1, 1] * vcov(model)[2, 2])
+print(paste("Pearson's correlation coeff = ", corr))
 ```
-**Covariance** and **correlation**:
-   - The covariance between `(Intercept)` and `logdos` is `0.0144`, indicating a small linear relationship between the two parameters. This suggests limited correlation between the intercept and the dose effect.
+
+**Covariance and Correlation**:
+   - The covariance between `(Intercept)` and `logdos` is `0.0144`, indicating a small linear relationship between the two parameters. This suggests limited correlation between the intercept and the dose effect. However, by computing the correlation coefficient manually, we see from the output that the correlation is roughly 0.66. This contradicts the previous indication of limited correlation, underlying that covariance is not sufficient when assessing linear relationship between variables.
+
+Next, we want to find a 95% confidence interval for the parameters using `confint.default()`.
+
+```{r, echo = FALSE}
+confint.default(model, levle = 0.95)
+```
+
 **Significance**:
    - From the confidence intervals, the interval for `logdos` does not include 0, confirming that \(\log(\text{dose})\) has a significant impact on tumor development.
+
 **Effect of Dose**:
    - The coefficient for `logdos` lies within [0.3537, 0.6870], indicating that increasing the dose significantly increases the log-odds of tumor occurrence.
 
-## Task4
+Lastly, we want to find a 95% confidence interval for the tumor risk at does 0.25 (equivalent to log(dose) = -1.39), which we will be done by using `predict` along with the specified model for convenience purposes.
+
+```{r, echo = FALSE}
+new_data <- data.frame(logdos = -1.39)
+pred <- predict(model, newdata = new_data, type = "response")
+
+pred_with_ci <- predict(model, newdata = new_data, type = "link", se.fit = TRUE)
+
+log_odds <- pred_with_ci$fit
+se <- pred_with_ci$se.fit
+ci_log_odds <- log_odds + c(-1.96, 1.96) * se
+
+ci_prob <- exp(ci_log_odds) / (1 + exp(ci_log_odds))
+print(paste("Predicted risk at log(dose) = -1.39:", pred))
+print(paste("95% C.I Lower:", ci_prob[1]))
+print(paste("95% C.I Upper:", ci_prob[2]))
+```
+
+The predicted tumor risk at at log(dose) = -1.39 is roughly 43% with a 95% C.I ranging from 31% to 55%
+
+## Task 4
 Perform a Wald-test of \( H_0 : \beta = 0 \). Explain and show with an own calculation, based on R-output, how the test statistic is constructed.
 
 The Wald test statistic is calculated as:
 \[
-W = \frac{\hat{\beta}_1^2}{\text{Var}(\hat{\beta}_1)}
+W = \frac{\hat{\beta}_1^2}{\text{Var}(\hat{\beta}_1)},
 \]
-Where:
+
+where
+
 - \(\hat{\beta}_1\): Estimated regression coefficient for \( \log(\text{dose}) \).
 - \(\text{Var}(\hat{\beta}_1)\): Variance of the estimated coefficient (obtained from the diagonal of the covariance matrix).
+
 ```{r}
 # Extract the coefficient and standard error for log(dose)
 beta1 <- coef(model)["logdos"]  # Extract the coefficient for log(dose)
@@ -383,20 +493,15 @@ cat("Wald Statistic:", wald_stat, "\n")
 p_value <- 1 - pchisq(wald_stat, df = 1)
 
 # Display the p-value
-cat("P-value:", p_value, "\n")
-
-# Draw conclusions based on the p-value
-if (p_value < 0.05) {
-  cat("Reject the null hypothesis: beta1 is significantly different from 0.\n")
-} else {
-  cat("Fail to reject the null hypothesis: beta1 is not significantly different from 0.\n")
-}
+cat("p-value:", p_value, "\n")
 ```
-**Conclusion**: The dose (log-transformed) has a significant positive effect on tumor development probability.
+**Conclusion**: With an extremly small p-value < 0.001, we do reject the null hypothesis that $\beta_1 = 0$. Thus the dose (log-transformed) has a significant positive effect on tumor development probability. 
 
-## Task5
-Q:The variance of a parameter estimate is generally inversely proportional to the sample size.Is this true also here?Since we have no expression explicitly for the variances, we cannot confirm it straightforward.In order to investigate it,you should multiply all counts in the table by 10 repeatedly (10,100,1000)and report what you observe.
-```{r}
+## Task 5
+
+Q: The variance of a parameter estimate is generally inversely proportional to the sample size. Is this true also here? Since we have no expression explicitly for the variances, we cannot confirm it straightforward. In order to investigate it,you should multiply all counts in the table by 10 repeatedly (10,100,1000) and report what you observe.
+
+```{r, echo = FALSE}
 # Define the original dataset
 logdos <- c(-7.60, -6.22, -4.60, -3.00, -1.39, 0.92)
 n <- c(18, 19, 28, 32, 28, 40)
@@ -429,12 +534,15 @@ results_df <- do.call(rbind, lapply(results, as.data.frame))
 colnames(results_df) <- c("Scale Factor", "Variance of Beta1")
 print(results_df)
 ```
-#### Observations:
+
+### Observations
+
 - As the scale factor (sample size) increases, the variance of \(\beta_1\) decreases significantly, confirming the inverse relationship.
 - For example:
   - At a scale factor of 10: Variance is relatively large.
   - At a scale factor of 100: Variance is 1/10th of the previous case.
   - At a scale factor of 1000: Variance is further reduced to 1/100th of the original.
 
-#### Conclusion:
+### Conclusion
+
 This empirical investigation confirms that the variance of a parameter estimate in logistic regression is inversely proportional to the sample size. This is consistent with statistical theory.
