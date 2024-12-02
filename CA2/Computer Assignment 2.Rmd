@@ -302,7 +302,7 @@ This equality occurs because the odds ratio for Model 1 (Periodontitis as a func
 The parameter estimates (\(\beta_1\) from Model 1 and \(\gamma_1\) from Model 2) are equal because they are both derived from the same odds ratio in the contingency table. This demonstrates the symmetry of logistic regression in cases like this, where the relationship between two binary variables is analyzed.
 
 # Exercise 2:2
-In an experiment,165 mice were exposed to various doses of bensoapyren (BaP) over a ten month period.It was then examined how many of the mice that has developed a lung tumor.The result as a function of logarithmic dose is:
+In an experiment, 165 mice were exposed to various doses of bensoapyren (BaP) over a ten month period.It was then examined how many of the mice that has developed a lung tumor.The result as a function of logarithmic dose is:
 
 ```{r, echo = FALSE}
 #Input data and create a data frame
@@ -314,7 +314,7 @@ data22
 ```
 
 ## Task 1
-Estimate for each dose separately the risk (probability) to develop a lung tumor. Make a plot of the risk against log(dos). Calculate the logodds for tumor and plot it against log(dose).Seems the logistic regression model appropriate for these data?
+Estimate for each dose separately the risk (probability) to develop a lung tumor. Make a plot of the risk against log(dos). Calculate the log odds for tumor and plot it against log(dose).Seems the logistic regression model appropriate for these data?
 
 The risk (or probability) of developing a lung tumor is calculated as:
 \[
@@ -348,7 +348,7 @@ plot(data22$logdos, data22$log_odds, type = "b", pch = 19, xlab = "log(Dose)", y
 ```
 
 
-Seems the logistic regression model appropriate for these data?
+***Seems the logistic regression model appropriate for these data?***
 
 **Data Characteristics**:  
    Logistic regression is suitable for binary data. In this case, the response variable is the probability of tumor occurrence, which meets the conditions for applying a logistic regression model.
@@ -362,7 +362,7 @@ We start by fitting the logistic regression model.
 
 ```{r, echo = FALSE}
 # Fit a logistic regression model
-model <- glm(cbind(x, n - x) ~ logdos, data = data22, family = binomial(link = logit))
+model <- glm(x/n~logdos, family = binomial(link=logit), weights=n, data=data22)
 
 # Model summary
 summary(model)
@@ -384,7 +384,7 @@ lines(data22$logdos, predict(model, type = "link"), col = "red")
 
 #### Coefficients
 - **Intercept (\( \beta_0 = 0.687 \))**:
-  - When Log(Dose) is 0 (i.e., the dose is 1), the log-odds of developing a tumor is 0.687.
+  - When log(dose) is 0 (i.e., the dose is 1), the log-odds of developing a tumor is 0.687.
   - Converting to probability:
     \[
     P = \frac{\exp(0.687)}{1 + \exp(0.687)} \approx 0.665
@@ -443,27 +443,51 @@ confint.default(model, levle = 0.95)
    - From the confidence intervals, the interval for `logdos` does not include 0, confirming that \(\log(\text{dose})\) has a significant impact on tumor development.
 
 **Effect of Dose**:
-   - The coefficient for `logdos` lies within [0.3537, 0.6870], indicating that increasing the dose significantly increases the log-odds of tumor occurrence.
+   - The coefficient for `logdos` lies within $[0.3537, 0.6870]$, indicating that increasing the dose significantly increases the log-odds of tumor occurrence.
 
-Lastly, we want to find a 95% confidence interval for the tumor risk at does 0.25 (equivalent to log(dose) = -1.39), which we will be done by using `predict` along with the specified model for convenience purposes.
+Lastly, we want to find a 95% confidence interval for the tumor risk at does 0.25 (equivalent to log(dose) = -1.39) using the formula
+
+$$
+\text{CI} = \hat{\beta_0} -1.39 \hat{\beta_1} \pm 1.96 \cdot \text{SE},
+$$
+
+where $\text{SE} = \sqrt{x^t \text{Cov}(\beta_0, \beta_1) x}$, $x^t = (1, -1.39)$ and $\text{Cov}(\beta_0, \beta_1)$ is the covariance matrix. After which, we convert the C.I above to a probability scale using
+
+$$
+\frac{\exp(\text{CI})}{1 + \exp{(\text{CI})}}.
+$$
+
+This is a consequence of the Delta Method.
 
 ```{r, echo = FALSE}
-new_data <- data.frame(logdos = -1.39)
-pred <- predict(model, newdata = new_data, type = "response")
+# Extract the model parameters
+beta0 <- coef(model)[1]
+beta1 <- coef(model)[2]
 
-pred_with_ci <- predict(model, newdata = new_data, type = "link", se.fit = TRUE)
+# Compute the SE for the logit
+cov_matrix <- vcov(model)
 
-log_odds <- pred_with_ci$fit
-se <- pred_with_ci$se.fit
-ci_log_odds <- log_odds + c(-1.96, 1.96) * se
+x <- c(1, -1.39)
 
-ci_prob <- exp(ci_log_odds) / (1 + exp(ci_log_odds))
-print(paste("Predicted risk at log(dose) = -1.39:", pred))
-print(paste("95% C.I Lower:", ci_prob[1]))
-print(paste("95% C.I Upper:", ci_prob[2]))
+se_logit <- sqrt(t(x) %*% cov_matrix %*% x)
+
+# Compute the 95% CI for the logit
+CI_upper <- beta0 - 1.39 * beta1 + 1.96 * se_logit
+CI_lower <- beta0 - 1.39 * beta1 - 1.96 * se_logit
+
+# Convert the logit to probabilities.
+CI_upper_prob <- exp(CI_upper) / (1 + exp(CI_upper))
+CI_lower_prob <- exp(CI_lower) / (1 + exp(CI_lower))
+
+# Convert the point estimate from logit scale to probability scale
+point_est <- exp(beta0 - 1.39 * beta1) / (1 + exp(beta0 - 1.39 * beta1))
+
+print(paste("Point estimate converted to probability scale:", point_est))
+print(paste("95% C.I Lower:", CI_lower_prob))
+print(paste("95% C.I Upper:", CI_upper_prob))
 ```
 
-The predicted tumor risk at at log(dose) = -1.39 is roughly 43% with a 95% C.I ranging from 31% to 55%
+From the output above we see that the tumor risk at dose 0.25 is estimated to approximately 0.49% and lies within the 95% confidence interval.
 
 ## Task 4
 Perform a Wald-test of \( H_0 : \beta = 0 \). Explain and show with an own calculation, based on R-output, how the test statistic is constructed.
