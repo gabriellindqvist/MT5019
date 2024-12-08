@@ -1,0 +1,342 @@
+---
+title: "Computer Assignment 4"
+author: "Gabriel Lindqvist, Jiahui Li"
+date: "2024-12-05"
+output:
+  pdf_document:
+    latex_engine: xelatex
+---
+
+In this exercise you will carry out several analyses of The ICU Study data (Hosmer Lemeshow (1989):Applied Logistic Regression).The data consists of records on 200 patients admitted to an Intensive Care Unit (ICU)during a certain period and the overall task is to use multiple logistic regression and decision tree models to identify factors that affect the survival of such patients.
+
+# Exercise4:1 (Multiple logistic regression)
+
+Which variables affect the survival of a patient admitted to ICU?And how do they affect the survival?To answer that,you should create a multiple logistic regression model for the probability to not survive (i.e.the probability to die).For variable selection,stepwise methods can be used.We will assume that there are no interactions between the variables (you are free to investigate whether this assumption is reasonable).
+
+## Task1
+Report the model selection process in short. Based on your chosen model, which factors affect the probability to not survive? Report odds ratio with confidence interval for the most important variables/factors and interpret them. Use the variable names in the table above when you report this (not V3,V4,...)
+
+### 1.1 Data prepration
+```{r}
+data4 <- read.csv("data_ca4.csv")
+# Combine categories (this should be done for one more variable)
+table(data4$v5)
+data4$v5[data4$v5>1] <- 0
+table(data4$v5)
+```
+### 1.2 Fitting multiple logistic regression models
+```{r}
+m_empty <- glm(v2~1, family=binomial,data=data4) # Empty model (only intercept)
+m_full <- glm(v2~., family=binomial,data=data4) # Full model (all explanatory variables)
+summary(m_full)
+```
+### 1.3 Stepwise model selection - forward, backward and both - with AIC or BIC as inclusion criteria
+
+```{r}
+mstep1_AIC <- step(m_empty, direction="forward", scope = list(upper = m_full), trace = TRUE)
+mstep2_AIC <- step(m_full, direction="backward", trace = FALSE)
+mstep3_AIC <- step(m_full, direction="both", trace = FALSE)
+```
+```{r}
+mstep1_BIC <- step(m_empty, direction="forward", scope = list(upper = m_full), k = log(nrow(data4)), trace = TRUE)
+mstep2_BIC <- step(m_full, direction="backward", k = log(nrow(data4)), trace = FALSE)
+mstep3_BIC <- step(m_full, direction="both", k = log(nrow(data4)), trace = FALSE)
+```
+### 1.4 Model Choosing
+
+In this stepwise regression process, both **AIC** (Akaike Information Criterion) and **BIC** (Bayesian Information Criterion) were used to select the best model. The basic approach for both is the same, with variables being added or removed step by step to optimize the model. However, **AIC** focuses more on model fit, while **BIC** penalizes model complexity more strongly, generally favoring simpler models.
+
+#### AIC Stepwise Regression:
+- The AIC stepwise regression started with an empty model (only the intercept), and variables were added step by step, selecting those that reduced the AIC value.
+- The final best model is:
+  ** v2 ~ v21 + v14 + v3 + v7 + v1 + v18 + v17 + v11 **
+- This model has an AIC value of **148.19**, including more variables, as AIC tends to favor models with better fit, even if they are more complex.
+
+#### BIC Stepwise Regression:
+- The BIC stepwise regression also started with an empty model, but in selecting variables, BIC penalizes model complexity more strongly. Therefore, it tends to select models with fewer variables.
+- The final best model is:
+  ** v2 ~ v21 + v14 + v3 + v7 **
+- This model has an AIC value of **172.09**, and a smaller BIC, which is why it includes fewer variables compared to the AIC model.
+
+### Final Model Choice
+
+Based on the results from both AIC and BIC:
+- **If the goal is to achieve better model fit and the complexity is not a primary concern**, the **AIC model** should be chosen, as it has a lower AIC value (148.19) and includes more explanatory variables.
+- **If the goal is to avoid overfitting and prefer a simpler model**, the **BIC model** should be selected, as it includes fewer variables due to the stronger penalty for complexity.
+
+Between the two, **the AIC model** provides a better fit and includes more variables, while **the BIC model** is more parsimonious.
+
+Thus, **the final chosen model** should be the **AIC model with AIC=148.19**:
+** v2 ~ v21 + v14 + v3 + v7 + v1 + v18 + v17 + v11 **
+
+### 1.5 Report odds ratio with confidence interval for the most important variables/factors and interpret them
+```{r}
+summary(mstep1_AIC)
+```
+
+```{r}
+# 1. Extract the model coefficients and standard errors
+model_summary <- summary(mstep1_AIC)
+
+# 2. Calculate the odds ratios (exp(coefficient)) and 95% confidence intervals
+coefficients <- model_summary$coefficients[, 1]  # Coefficients
+std_errors <- model_summary$coefficients[, 2]    # Standard errors
+
+# Calculate the odds ratios (exp of the coefficients)
+odds_ratios <- exp(coefficients)
+
+# Calculate the 95% confidence intervals
+conf_int_lower <- exp(coefficients - 1.96 * std_errors)
+conf_int_upper <- exp(coefficients + 1.96 * std_errors)
+
+# 3. Create a data frame with the results
+results <- data.frame(
+  Variable = names(coefficients),
+  Odds_Ratio = odds_ratios,
+  CI_Lower = conf_int_lower,
+  CI_Upper = conf_int_upper
+)
+
+# Display the results
+print(results)
+```
+
+Based on the **`mstep1_AIC`** model, we can report the **odds ratios (OR)** and their **95% confidence intervals (CI)** for the most significant variables in predicting survival. 
+
+#### Model Results:
+
+### Key Variables and Interpretation:
+
+**v21 (Heart Rate)**:  
+   Odds ratio = **13.75** (CI: **3.58 to 52.74**).  
+   For each unit increase in heart rate, the odds of survival increase by **13.75 times** (**p = 0.00013**).
+
+**v14 (Blood pH)**:  
+   Odds ratio = **21.22** (CI: **3.40 to 132.32**).  
+   Each unit increase in blood pH increases the odds of survival by **21.22 times** (**p = 0.0011**).
+
+**v3 (Age)**:  
+   Odds ratio = **1.04** (CI: **1.01 to 1.07**).  
+   Each year increase in age increases the odds of survival by **4%** (**p = 0.0039**).
+
+**v7 (Cancer)**:  
+   Odds ratio = **10.37** (CI: **1.89 to 56.74**).  
+   Having cancer increases the odds of survival by **10.37 times** (**p = 0.007**).
+
+**v1 (Previous Kidney Failure)**:  
+   Odds ratio = **0.998** (CI: **0.996 to 0.9996**).  
+   Previous kidney failure slightly decreases the odds of survival (**p = 0.0183**).
+
+**v18 (Fracture of Neck or Spine)**:  
+   Odds ratio = **0.085** (CI: **0.0106 to 0.6817**).  
+   A fracture of the neck or spine decreases survival odds by **88%** (**p = 0.0203**).
+
+**v17 (Consciousness Level)**:  
+   Odds ratio = **8.07** (CI: **1.37 to 47.41**).  
+   Higher consciousness levels increase survival odds by **8.07 times** (**p = 0.0208**).
+
+**v11 (Blood Pressure)**:  
+   Odds ratio = **0.99** (CI: **0.98 to 1.00**).  
+   Blood pressure has little impact on survival (**p = 0.1557**).
+
+#### Key Insights:
+- **Most significant variables**: 
+  - **Heart rate (v21)**, **blood pH (v14)**, and **cancer (v7)** have the largest odds ratios, indicating that these factors are the most influential in predicting survival.
+  - **Fracture of neck or spine (v18)** appears to have a strong negative effect on survival, with an odds ratio much less than 1, indicating a harmful effect on survival chances.
+
+#### Conclusion:
+- Variables such as **heart rate (v21)**, **blood pH (v14)**, and **cancer (v7)** have a significant positive impact on survival, meaning that higher heart rate, better blood pH, and having cancer all increase the odds of survival.
+- **Fracture of neck or spine (v18)** significantly decreases the odds of survival.
+- **Blood pressure (v11)** shows no significant effect on survival in this model.
+
+These odds ratios and their confidence intervals help us understand which factors are most influential in predicting survival and can guide clinical decision-making.
+
+## Task2 
+How well does your chosen model fits the data? In assignment 3,the deviance was used to assess model fit but since the data now is on individual level,deviance is not suitable and instead,the Hosmer-Lemeshow goodness-of-fit test (Agresti 5.2.5) should be used.Perform this test in R(see the R-instruction)and interpret the result.
+```{r}
+predprob<- predict(mstep1_AIC, type = "response") # Obtain predicted probabilities for the best model
+library(ResourceSelection) 
+
+hoslem_result <- hoslem.test(data4$v2, predprob, g = 10)  # Use v2 as the response variable
+
+print(hoslem_result)
+
+hoslem_result$p.value
+```
+The **p-value** of **0.9145** from the **Hosmer-Lemeshow test** indicates that the model **fits the data well**. Since the p-value is greater than 0.05, we **fail to reject the null hypothesis**, meaning there is no significant difference between the observed and predicted values. This suggests the model's predictions align closely with the actual outcomes.
+
+## Task3
+Now we shift the focus to prediction.How well does your multiple logistic regression models predict the outcome?There exists several different metrics of prediction performance for binary responses and here we will use the following:'Accuracy', 'Sensitivity (True positive rate),'Specificity (True negative rate)and 'AUC (area under the ROC curve).To explain these measures we first notice that the model predictions (or fitted values)are probabilities to not survive.If we let patients be classified as 'Survive'or 'Not survive'when theirs predicted probability is below or above a certain cut-off value (threshold value),a confusion matrix (a 2x2 classification table)can be constructed,as shown below.
+
+| **Actual**            | **Predicted Survive** | **Predicted Not Survive** | **Total** |
+|-----------------------|-----------------------|---------------------------|-----------|
+| **Actual Survive**    | n11                   | n12                       | n1.        |
+| **Actual Not Survive**| n21                   | n22                       | n2.        |
+| **Total**             |                     |                         | n..         |
+
+**Calculate the metrics**:
+   - **Accuracy** = \(\frac{n_{11} + n_{22}}{n}\)
+   - **Sensitivity (True Positive Rate)** = \(\frac{n_{11}}{n_{1.}}\)
+   - **Specificity (True Negative Rate)** = \(\frac{n_{22}}{n_{2.}}\)
+```{r}
+# Apply a threshold of 0.5 to classify as Survive or Not survive
+predicted_class <- ifelse(predprob >= 0.5, 1, 0)  # 1 for Survive, 0 for Not Survive
+
+# Construct the confusion matrix
+actual_class <- data4$v2  # Adjust to the correct actual variable name if needed
+
+# Confusion matrix
+conf_matrix <- table(Actual = actual_class, Predicted = predicted_class)
+
+
+print(conf_matrix)
+
+# Calculate the metrics
+n11 <- conf_matrix[1, 1]  # True positives
+n12 <- conf_matrix[1, 2]  # False negatives
+n21 <- conf_matrix[2, 1]  # False positives
+n22 <- conf_matrix[2, 2]  # True negatives
+
+# Calculate accuracy, sensitivity, and specificity
+accuracy <- (n11 + n22) / sum(conf_matrix)
+sensitivity <- n11 / (n11 + n12)
+specificity <- n22 / (n21 + n22)
+
+# Display the results
+cat("Accuracy: ", accuracy, "\n")
+cat("Sensitivity: ", sensitivity, "\n")
+cat("Specificity: ", specificity, "\n")
+
+```
+
+### Interpretation of the Results:
+
+1. **Confusion Matrix**:
+   - **True Negatives (TN)** = 155: These are the cases where the model correctly predicted "Not Survive" (Actual = 0 and Predicted = 0).
+   - **False Positives (FP)** = 5: These are the cases where the model incorrectly predicted "Survive" (Actual = 0 but Predicted = 1).
+   - **False Negatives (FN)** = 22: These are the cases where the model incorrectly predicted "Not Survive" (Actual = 1 but Predicted = 0).
+   - **True Positives (TP)** = 18: These are the cases where the model correctly predicted "Survive" (Actual = 1 and Predicted = 1).
+
+2. **Metrics**:
+   - **Accuracy** = **0.865**: This means that 86.5% of the total predictions were correct. Accuracy is the overall proportion of correct predictions, including both "Survive" and "Not Survive" cases.
+   - **Sensitivity (True Positive Rate)** = **0.96875**: This indicates that 96.88% of actual survivors (Actual = 1) were correctly predicted as "Survive" (Predicted = 1). A high sensitivity means the model is good at identifying survivors.
+   - **Specificity (True Negative Rate)** = **0.45**: This indicates that only 45% of actual non-survivors (Actual = 0) were correctly predicted as "Not Survive" (Predicted = 0). A low specificity means that the model is not very good at identifying non-survivors, leading to a relatively high false positive rate.
+
+### Conclusion:
+
+- The model is performing well in terms of **sensitivity** (96.88%), meaning it is effective at identifying individuals who survive. 
+- However, the model has a **low specificity** (45%), meaning it struggles to correctly identify individuals who do not survive, as evidenced by a relatively high number of false positives.
+- The **accuracy** of 86.5% suggests that the overall performance is reasonable, but the low specificity indicates that there might be room for improvement, especially in predicting non-survivors. 
+
+## Task4
+As shown above,the sensitivity and specificity dependens on the cut-off setting. A ROC-curve is a plot of sensitivity (true positive rate)against 1-specificity (false postive rate)at each possible cut-off setting.AUC is the area under the ROC curve and can be used as a summary metsure of a binary classifier's performance. AUC=1 indicates perfect classification and AUC=0.5 indicates that the model's performance is no better than random guessing.Create plots of ROC curves and calculate the AUC for the full model and two more models of your choice (see the R-instruction) Which of the model performs best based on AUC?
+```{r}
+# Step 1: Install and load the necessary libraries
+library(pROC)
+
+# Step 2: Obtain predicted probabilities from the models
+# For the full model (m_full)
+predprob_full <- predict(m_full, type = "response")
+
+#The chosen two models
+predprob_model1 <- predict(mstep1_AIC, type = "response")
+predprob_model2 <- predict(mstep1_BIC, type = "response")
+
+# Step 3: Calculate ROC and AUC for the full model
+roc_full <- roc(data4$v2, predprob_full)  # 'v2' is the actual response variable
+auc_full <- auc(roc_full)
+
+# Step 4: Calculate ROC and AUC for the first additional model
+roc_model1 <- roc(data4$v2, predprob_model1)
+auc_model1 <- auc(roc_model1)
+
+# Step 5: Calculate ROC and AUC for the second additional model
+roc_model2 <- roc(data4$v2, predprob_model2)
+auc_model2 <- auc(roc_model2)
+
+# Step 6: Plot the ROC curves for all models
+plot(roc_full, col = "blue", main = "ROC Curve Comparison", lwd = 2)
+lines(roc_model1, col = "red", lwd = 2)
+lines(roc_model2, col = "green", lwd = 2)
+
+# Add a legend
+legend("bottomright", legend = c("Full Model", "mstep1_AIC", "mstep1_BIC"), 
+       col = c("blue", "red", "green"), lwd = 2)
+
+# Step 7: Display AUC values for comparison
+cat("AUC for Full Model: ", auc_full, "\n")
+cat("AUC for mstep1_AIC: ", auc_model1, "\n")
+cat("AUC for mstep1_BIC: ", auc_model2, "\n")
+
+```
+- **Full Model** performs the best with the highest AUC, indicating the strongest predictive ability.
+- **mstep1_AIC** follows closely behind, but with slightly lower performance.
+- **mstep1_BIC** has the lowest performance in terms of AUC.
+
+## Task5
+The AUC-values obtained in the previous exercise may be subject to optimistic bias, as they were computed for the same dataset that was used for model fitting. This might result in overfitting,where the model become well adapted to the training data but may not perform as good to new data.To get a more reliable AUC-value, a validation method can be used.We will use the Leave-One-Out-Cross-Validation (LOOCV).For LOOCV,a model is fitted (or trained)using all observations except one,which is held out for validation.The model is then used to make a prediction on the held-out observation.This process is repeated for each observation,resulting in LOOCV predicted probabilities for each observation (see the R-instruction).These LOOCV predicted probabilities can then be used to calculate AUC.Do this for the full model and two more models of your choice (the same models as in the previous exercise).Which of the model performs best based on LOOCV-adjusted AUC? Compare with the result in the previous exercise. 
+Note:The stepwise procedure should not be performed within the cross-validation 1oop.
+```{r}
+# Step 1: Create vectors for storing LOOCV predicted probabilities for each model
+predprob_LOOCV_full <- numeric(nrow(data4))  # Full model
+predprob_LOOCV_AIC <- numeric(nrow(data4))   # AIC model
+predprob_LOOCV_BIC <- numeric(nrow(data4))   # BIC model
+
+# Step 2: Perform LOOCV for each model
+for (i in 1:nrow(data4)) {
+  
+  # Create training and validation sets
+  data_training <- data4[-i, ]  # Exclude the i-th observation for training
+  data_validation <- data4[i, , drop = FALSE]  # Keep the i-th observation for validation
+  
+  # Full model
+  m_full <- glm(v2 ~ ., family = binomial, data = data_training)
+  
+  # AIC model
+  m_AIC <- glm(v2 ~ v21 + v14 + v3 + v7 + v1 + v18 + v17 + v11, family = binomial, data = data_training)
+  
+  # BIC model
+  m_BIC <- glm(v2 ~ v21 + v14 + v3 + v7, family = binomial, data = data_training)
+  
+  # Predict the probability for the held-out observation for each model
+  predprob_LOOCV_full[i] <- predict(m_full, newdata = data_validation, type = "response")
+  predprob_LOOCV_AIC[i] <- predict(m_AIC, newdata = data_validation, type = "response")
+  predprob_LOOCV_BIC[i] <- predict(m_BIC, newdata = data_validation, type = "response")
+}
+
+# Step 3: Calculate AUC for each model using LOOCV predicted probabilities
+library(pROC)
+
+# ROC and AUC for Full Model
+roc_full <- roc(data4$v2, predprob_LOOCV_full)
+auc_full <- auc(roc_full)
+
+# ROC and AUC for AIC Model
+roc_AIC <- roc(data4$v2, predprob_LOOCV_AIC)
+auc_AIC <- auc(roc_AIC)
+
+# ROC and AUC for BIC Model
+roc_BIC <- roc(data4$v2, predprob_LOOCV_BIC)
+auc_BIC <- auc(roc_BIC)
+
+# Step 4: Display ROC curves for all models
+plot(roc_full, col = "blue", main = "ROC Curve Comparison (LOOCV)", lwd = 2)
+lines(roc_AIC, col = "red", lwd = 2)
+lines(roc_BIC, col = "green", lwd = 2)
+
+# Add a legend to the plot
+legend("bottomright", legend = c("Full Model", "Model 1 AIC", "Model 1 BIC"), 
+       col = c("blue", "red", "green"), lwd = 2)
+
+# Step 5: Display AUC values for comparison
+cat("AUC for Full Model: ", auc_full, "\n")
+cat("AUC for Model 1 (AIC): ", auc_AIC, "\n")
+cat("AUC for Model 1 (BIC): ", auc_BIC, "\n")
+
+
+```
+- The **AIC model** (AUC = 0.8194) performs the best, with the strongest discriminative power.
+- The **BIC model** (AUC = 0.8147) performs well but is slightly weaker than the AIC model.
+- The **Full model** (AUC = 0.7348) performs relatively poorly, indicating that its predictive ability is not as strong as the AIC and BIC models.
+
+Based on the **LOOCV-adjusted AUC**, the **AIC model** is the best choice.
