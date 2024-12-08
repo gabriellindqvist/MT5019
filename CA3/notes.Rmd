@@ -1,0 +1,23 @@
+---
+title: "notes_ca3"
+author: "Gabriel Lindqvist, Jiahui Li"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r}
+data3 <- read.csv("data_ca3.csv")
+
+data3$x <- as.factor(data3$x)
+data3$y <- as.factor(data3$y)
+data3$z <- as.factor(data3$z)
+data3$v <- as.factor(data3$v)
+
+msat<-glm(n~x*y*z*v, family=poisson(link=log), data=data3)
+
+m2 <- glm(n ~ x*y + x*z+ x*v + y*z + y*v + z*v, family = poisson(link = log), data = data3)
+
+mstep <- step(msat, direction="both", trace=FALSE, scope = list(upper = msat, lower = m2))
+summary(mstep)
+```
+
