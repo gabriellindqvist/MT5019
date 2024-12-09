@@ -1,7 +1,7 @@
 ---
 title: "Computer Assignment 3"
 author: "Gabriel Lindqvist, Jiahui Li"
-date: "2024-12-05"
+date: "2024-12-09"
 output: pdf_document
 ---
 # Exercise 3:1
@@ -101,7 +101,7 @@ Next, we implement the same function but change the scope argument `scope = list
 mstep <- step(m2, direction="both", trace=TRUE, scope = list(upper = m2, lower = m1))
 ```
 
-From the output above, we see that the best model (relative to AIC) between `m1` and `m2` is the submodel when removing the interaction term `y:z`. That is, using compact notation
+From the output above, we see that the best model (relative to AIC) between $(X, Y, Z, V)$ and $(XY, XZ, XV, YZ, YV, ZV)$  is the submodel when removing the interaction term `y:z`. That is, using compact notation
 
 $$
 (XY, XZ, XV, YV, ZV),
@@ -322,7 +322,7 @@ print(results)
 
 ## Task 4
 
-The task emphasizes heavily on the relationship between child survival and smoking habits. For simplicity, we chose to focus on the independent effects of each categorical variable. That is, we exclude all interaction in our model such that
+To find a good model, we systematically try all possible combinations of interaction terms starting with the full model. After checking all the models, we found that no interaction terms were significant for each combination. Thus, we landed on the model which only includes the main effects. That is,
 
 $$
 \text{logit}\bigl[P(V = 1) \bigr] = \beta_0 + \beta_1X + \beta_2Y +\beta_3Z.
@@ -341,18 +341,22 @@ summary_model <- summary(model_simplified)
 
 coef_table <- summary_model$coefficients
 coef_df <- data.frame(
-  Coefficient = round(coef_table[, "Estimate"], digits = 4),
-  Std_Error = round(coef_table[, "Std. Error"], digits = 4),
+  Coefficient = coef_table[, "Estimate"],
+  Std_Error = coef_table[, "Std. Error"],
   P_value = round(coef_table[, "Pr(>|z|)"], digits = 4)
 )
 
 # Calculate odds ratios and 95% confidence intervals
 coef_df$Odds_Ratio <- round(exp(coef_df$Coefficient), digits = 4)
-coef_df$CI_Lower <- round(exp(coef_df$Coefficient - 1.96 * coef_df$Std_Error), digits = 4)
-coef_df$CI_Upper <- round(exp(coef_df$Coefficient + 1.96 * coef_df$Std_Error), digits = 4)
+coef_df$CI_Lower <- round(exp(coef_df$Coefficient - 1.96 * coef_df$Std_Error), 
+                          digits = 4)
+coef_df$CI_Upper <- round(exp(coef_df$Coefficient + 1.96 * coef_df$Std_Error), 
+                          digits = 4)
 
 # Rearrange columns for better readability
-coef_df <- coef_df[, c("Coefficient", "Std_Error", "Odds_Ratio", "CI_Lower", "CI_Upper", "P_value")]
+coef_df <- coef_df[, c(
+  "Coefficient", "Std_Error", "Odds_Ratio", "CI_Lower", "CI_Upper", "P_value"
+  )]
 
 coef_df 
 ```
@@ -373,10 +377,17 @@ The non-significance of smoking habits are rather surprising, since smoking is u
 
 ## Task 5
 
-The corresponding log-linear model is $(XY, XZ, XV, YZ, YV, ZV)$, where the two-way interactions `x:v`, `y:v`, `z:v` are of main interest. Thus, we generate a table a table that includes the estimates and standard error for these three interaction terms.
+The equivalent log-linear model is $(XYZ, XV, YV, ZV)$, where the two-way interactions `x:v`, `y:v`, `z:v` are of main interest. This is due to logistic models not assuming anything regarding relationships among the predictors.
+
+
+We generate a table a table that includes the coefficients (estimates) and standard error for these three interaction terms.
 
 ```{r, echo = FALSE}
-m_loglin <- glm(n ~ x*y + x*z + x*v + y*z + y*v + z*v, family = poisson(link = "log"), data = data3)
+m_loglin <- glm(
+  n ~ x*y*z + x*v + y*v + z*v, 
+  family = poisson(link = "log"),
+  data = data3
+)
 
 # Extract coefficients and standard errors from the log-linear model
 loglinear_coefficients <- summary(m_loglin)$coefficients
@@ -384,12 +395,13 @@ loglinear_coefficients <- summary(m_loglin)$coefficients
 # Filter for the two-way interactions of interest: x:v, y:v, and z:v
 loglinear_df <- data.frame(
   Interaction_Term = rownames(loglinear_coefficients),
-  Coefficient = round(loglinear_coefficients[, "Estimate"], digits = 4),
-  Std_Error = round(loglinear_coefficients[, "Std. Error"], digits = 4)
+  Coefficient = loglinear_coefficients[, "Estimate"],
+  Std_Error = loglinear_coefficients[, "Std. Error"]
 )
 
 # Subset the interactions of interest (x:v, y:v, z:v)
-loglinear_interactions <- loglinear_df[grep("x:v|y:v|z:v", loglinear_df$Interaction_Term), ]
+loglinear_interactions <- loglinear_df[grep(
+  "x:v|y:v|z:v", loglinear_df$Interaction_Term), ]
 
 loglinear_interactions
 ```

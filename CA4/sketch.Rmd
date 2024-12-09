@@ -1,0 +1,15 @@
+---
+title: "notes"
+author: "Gabriel Lindqvist, Jiahui Li"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r}
+data4 <- read.csv("data_ca4.csv")
+# Combine categories (this should be done for one more variable)
+table(data4$v5)
+data4$v5[data4$v5>1] <- 0
+table(data4$v5)
+```
+
