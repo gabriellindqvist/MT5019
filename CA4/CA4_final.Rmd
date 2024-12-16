@@ -25,7 +25,7 @@ data4$v5[data4$v5>1] <- 0
 table(data4$v5)
 ```
 
-After further investigation we found that `v21` (Consciousness level) had low counts for the levels 1=unconscious (5 obs.) and 2=coma (10 obs.). Since coma is a more specific type of unconsciousness, we can combine the two categories but at the cost of potential explanation. The new encoding are `0=awake` and `1=unconscious`
+After further investigation we found that `v21` (Consciousness level) had low counts for the levels 1=unconscious (5 obs.) and 2=coma (10 obs.). Since coma is a more specific type of unconsciousness, we can combine the two categories. The new encoding are `0=awake` and `1=unconscious`.
 
 ```{r, echo = FALSE}
 table(data4$v21)
@@ -110,9 +110,11 @@ Based on the results from both AIC and BIC:
 
 - **If the goal is to avoid potential overfitting and prefer a simpler model**, the **BIC model** should be selected, as it includes fewer variables due to the stronger penalty for complexity.
 
-Between the two, **the AIC model** provides a better fit and includes more variables, while **the BIC model** is more parsimonious. Thus, **the final chosen model** should be the **AIC model with AIC=144.44**
+Between the two, **the AIC model** provides a better fit and includes more variables, while **the BIC model** is more parsimonious. Thus, **the final chosen model** should be the **AIC model with AIC=144.44**. This model is denoted as `mstep1_AIC`, which used forward selection.
 
 ### 1.4 Report odds ratio with confidence interval for the most important variables/factors and interpret them
+
+Based on the `mstep1_AIC` model, we can report the **odds ratios (OR)** and their **95% confidence intervals (CI)** for the most significant variables in predicting survival. 
 
 ```{r, echo = FALSE}
 # 1. Extract the model coefficients and standard errors
@@ -141,23 +143,21 @@ results <- data.frame(
 print(results)
 ```
 
-Based on the `mstep1_AIC` model, we can report the **odds ratios (OR)** and their **95% confidence intervals (CI)** for the most significant variables in predicting survival. 
-
 #### Model Results:
 
-- **v21 (Consciousness Level)**: Odds ratio = **89.68** (CI: **12.29 to 654.56**). Higher levels of consciousness significantly increase the odds of survival by **89.68 times** compared to lower levels.
+- **v21 (Consciousness Level)**: Odds ratio = **89.68** (CI: **12.29 to 654.56**). Being awake significantly increase the odds of survival by **89.68 times** compared to patients being unconscious, while other predictors are fixed.
 
-**v14 (Type of Admission)**: Odds ratio = **20.65** (CI: **3.18 to 134.26**). Patients with acute admission are **20.65 times** greater to survive compared to those with non-acute admission.
+- **v14 (Type of Admission)**: Odds ratio = **20.65** (CI: **3.18 to 134.26**). Patients with acute admission are **20.65 times** greater to survive compared to those with non-acute admission.
 
-**v3 (Age)**: Odds ratio = **1.04** (CI: **1.016 to 1.072**). Each year increase of age increases the odds of survival by **4%**. This indicates a small but statistically significant positive effect.
+- **v3 (Age)**: Odds ratio = **1.04** (CI: **1.016 to 1.072**). Each year increase of age increases the odds of survival by **4%**, holding other predictors constant. This indicates a small but statistically significant positive effect.
 
-**v7 (Cancer)**: Odds ratio = **11.05** (CI: **1.94 to 62.97**). Patients with cancer have **11.05 times** higher odds of survival compared to those without cancer.
+- **v7 (Cancer)**: Odds ratio = **11.05** (CI: **1.94 to 62.97**). Patients with cancer have **11.05 times** higher odds of survival compared to those without cancer, holding other predictors constant
 
-**v11 (Blood Pressure)**: Odds ratio = **0.99** (CI: **0.972 to 0.999**). Each unit increase in blood pressure slightly decreases the odds of survival by **1%**. The effect is small but statistically significant.
+- **v11 (Blood Pressure)**: Odds ratio = **0.99** (CI: **0.972 to 0.999**). Each unit increase in blood pressure slightly decreases the odds of survival by **1%**, adjusting for other predictors The effect is small but statistically significant.
 
-**v18 (Blood Carbon Dioxide)**: Odds ratio = **0.105** (CI: **0.015 to 0.738**). Patients with blood carbon dioxide levels above 45 have an **89.5% decrease in odds of survival**, suggesting a strong negative impact.
+- **v18 (Blood Carbon Dioxide)**: Odds ratio = **0.105** (CI: **0.015 to 0.738**). Patients with blood carbon dioxide levels above 45 have an **89.5% decrease in odds of survival**, adjusting for other predictors. This suggests a strong negative impact.
 
-**v17 (Blood pH)**: Odds ratio = **6.39** (CI: **1.15 to 35.43**). Higher blood pH levels (above 7.25) increase the odds of survival by **6.39 times** compared to lower levels.
+- **v17 (Blood pH)**: Odds ratio = **6.39** (CI: **1.15 to 35.43**). Higher blood pH levels (above 7.25) increase the odds of survival by **6.39 times** compared to lower levels, adjusting for other predictors.
 
 #### Key Insights:
 
@@ -450,9 +450,9 @@ tml_info <- rpart(
 
 To decide on a "good" decision tree (without computing AUC or LOOCV), intuitively, we compare the predictors selected in the decision tree with the logistic regression chosen in the previous exercise. We also weigh in interpretation, with simpler decision trees are in favor.
 
-A key difference from the observations is that the gini splitting method has included **Heart rate**, while excluded in the chosen logistic regression model. This does not necessarily imply that the predictor has no influence in patient survival, due to AIC-based model selection. Furthermore, **Heart rate** is treated as binary, while its continuous in the logistic regression model.  
+A key difference from the observations is that the gini splitting method has included **Heart rate**, while excluded in the chosen logistic regression model. This does not necessarily imply that the predictor has no influence in patient survival, due to AIC-based model selection. Furthermore, **Heart rate** is treated as binary, while its continuous in the logistic regression model.
 
-In contrast, the information splitting method is consistent with its inclusion of predictors (relative to the chosen logistic regression model). That is, all predictors found in the largest tree are also found in the chosen logistic regression. However, this tree is rather complex with a height of 7. Thus, we decided to go with the simpler tree that only includes **Conciousness level** and **Blood pressure**.
+In contrast, the information splitting method is consistent with its inclusion of predictors (relative to the chosen logistic regression model). That is, all predictors found in the largest tree are also found in the chosen logistic regression model. However, this tree is rather complex with a height of 7. Thus, we decided to go with the simpler tree that only includes **Conciousness level** and **Blood pressure**.
 
 ### Interpretation of Chosen Tree Model
 
@@ -500,7 +500,7 @@ Comparing AUC between the chosen tree model and the logistic regression models, 
 
 ### Thoughts Regarding The Results
 
-Based on intuition, the results are not surprising. The chosen tree model is simplistic, including only two predictors, likely limits its ability to capture the full complexity of the relationship found in the data. The largest tree model includes all key predictors identified as significant in the AIC-based logistic regression model. In that sense, the decision tree has access to the same information as the logistic regression. 
+Based on intuition, the results are not surprising. The chosen tree model is simplistic, including only two predictors, which limits its ability to capture the full complexity of the relationship found in the data. The largest tree model includes all key predictors identified as significant in the AIC-based logistic regression model. In the sense that the decision tree has access to the same information as the AIC-based logistic regression model. 
 
 ## Task 3
 
