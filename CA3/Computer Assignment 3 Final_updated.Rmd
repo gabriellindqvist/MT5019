@@ -1,0 +1,409 @@
+---
+title: "Computer Assignment 3"
+author: "Gabriel Lindqvist, Jiahui Li"
+date: "2024-12-09"
+output: pdf_document
+---
+# Exercise 3:1
+
+## Task 1
+
+In order to find a 'good' model, several models have to be fitted. Start with the saturated model (which has a perfect fit) and remove interaction terms in a systematic way, where higher order interactions are removed before lower order interactions. No main effect should be removed, since the interest here is the association between the variables. The goodness-of-fit of the different models should be evaluated with deviance (compared to the saturated model) and AIC, and the table below should be completed with the calculated values. The variable names to be used are: X=Mother's age, Y=Smoking habits, Z=Gestational age and V Child survival.
+
+### 1. Read the Data
+
+We start by reading the data.
+
+```{r}
+data3 <- read.csv("data_ca3.csv")
+```
+
+### 2. Fitting a loglinear Model
+
+The goal is to fill the table provided in the assignment. We start by fitting the saturated model.
+
+```{r, echo = FALSE}
+msat<-glm(n~x*y*z*v, family=poisson(link=log), data=data3)
+summary(msat)
+```
+
+#### Saturated Model:
+
+- The saturated model includes all variables (\(x, y, z, v\)) and all interaction terms up to the fourth order.
+
+- **Residual Deviance**: \(2.3315 \times 10^{-14}\) with 0 degrees of freedom, indicating a perfect fit. This is expected for a saturated model, as it uses all available degrees of freedom to capture the variability in the data.
+
+- **AIC**: 123.97. AIC is primarily used for model comparison; for now, this value serves as a baseline.
+
+- **Significant terms**:
+  
+  - Significant main effects: \(y\), \(z\), \(v\).
+  
+  - Significant interactions: \(x:v\), \(z:v\).
+
+- **Non-significant terms**: Higher-order interactions (\(x:y:z:v\)) and some lower-order interactions (\(x:y, y:z\), etc.) are not significant (\(p > 0.05\)).
+
+- **Conclusion**: The saturated model perfectly fits the data but is overly complex, containing many non-significant interactions. Simplification is necessary to improve interpretability.
+
+Next, we fit the model $(XYZ, XYV, XZV, YVZ)$, calculate the AIC and perform a LR-test to find the deviance and the p-value
+
+```{r, echo = FALSE}
+m3<-glm(n~(x*y*z+x*y*v+x*z*v+y*z*v), family=poisson(link=log), data=data3)
+print(paste("AIC:", AIC(m3)))
+anova(m3, msat, test="LRT")
+```
+
+#### Model with all three-way interactions:
+
+- **Residual Deviance**: 0.35935 with 1 degree of freedom. The residual deviance is very low, indicating the model still fits the data well despite simplification.
+
+- **AIC**: 122.33, which is lower than the saturated model's AIC (123.97). This suggests the three-way interaction model is more parsimonious while still providing a good fit.
+
+- **p-value**: The p-value is non-significant, when testing the submodel against the saturated model. That is, we retain the submodel. 
+
+- **Conclusion**: The three-way interaction model provides a simpler, nearly equivalent fit compared to the saturated model. Further simplification can be considered by removing potential non-significant terms.
+
+#### Model with up to two-way interactions and the simplest model:
+
+```{r, echo = FALSE}
+#Build the two-way interactions
+m2 <- glm(n ~ x*y + x*z+ x*v + y*z + y*v + z*v, family = poisson(link = log), data = data3)
+print(paste("AIC:", AIC(m2)))
+anova(m2, msat, test="LRT")
+```
+
+```{r, echo = FALSE}
+# Build the simplest model with only main effects
+m1 <- glm(n ~ x + y + z + v, family = poisson(link = log), data = data3)
+print(paste("AIC:", AIC(m1)))
+anova(m1, msat, test="LRT")
+```
+
+### 3. Stepwise Model Selection Using AIC
+
+We start by implementing the `step()` function to find the best model between the model with all three-way interactions and the model with all the two-way interactions.
+
+```{r}
+mstep <- step(m3, direction="both", trace=TRUE, scope = list(upper = m3, lower = m2))
+```
+
+From the output above, the best model (relative to AIC) between $(XYZ, XYV, XZV, YZV)$ and $(XY, XZ, XV, YZ, YV, ZV)$ is 
+
+$$
+(XYV, XZ, YZ, ZV),
+$$
+
+with an AIC of $117.14$. A LR-test between the simpler model (stated above) against the saturated model, yield the p-value $p = 0.8842$ and a deviance of $117.14$. 
+
+Next, we implement the same function but change the scope argument `scope = list(upper = m2, lower = m1)` and the starting model.
+
+```{r}
+mstep <- step(m2, direction="both", trace=TRUE, scope = list(upper = m2, lower = m1))
+```
+
+From the output above, we see that the best model (relative to AIC) between $(X, Y, Z, V)$ and $(XY, XZ, XV, YZ, YV, ZV)$  is the submodel when removing the interaction term `y:z`. That is, using compact notation
+
+$$
+(XY, XZ, XV, YV, ZV),
+$$
+
+with an AIC of $113.80$. A LR-test between the simpler model (stated above) against the saturated model, yield the p-value $p = 0.94$ and a deviance of $1.8221$.
+
+### 4. The Final Table
+
+| Model                                                                                     | Deviance  | df | AIC    | p_value      |
+|-------------------------------------------------------------------------------------------|-----------|----|--------|--------------|
+| $(XYZV)$                                                                                  | 0         | 0  | 123.97 | NA           |
+| $(XYZ, XYV, XZV, YZV)$                                                                    | 0.35935   | 1  | 122.33 | 0.55         |
+| $(XYV, XZ, YZ, ZV)$                                                                       | 1.1627    | 4  | 117.14 | 0.88         |
+| $(XY, XZ, XV, YZ, YV, ZV)$                                                                | 7.7197    | 5  | 115.69 | 0.89         |
+| $(XY, XZ, XV, YV, ZV)$                                                                    | 1.8221    | 6  | 113.80 | 0.94         |
+| $(X, Y, Z, V)$                                                                            | 377.79    | 11 | 479.76 | 0            |
+
+#### 4.1 Conclusion Based on the Table
+
+Most notably, the simplest model $(X, Y, Z, V)$ shows the worst fit with a relative high deviance and AIC. In contast, the best fitted model (relative to satured model) is the model found in row 2, with the lowest deviance. However, the lowered AIC value is not relative substantial, meaning an increase in goodness of fit does not justify an increase in complexity. Which is why the best model is $(XY, XZ, XV, YV, ZV)$. Though a small increase in deviance, the model has the lowest AIC and largest p-value. That is, the trade-off in 'slightly' worse fit is not significant.
+
+## Task 2
+
+Choose from your table a model with few parameters and a good fit. Describe the procedure to compare different models.
+
+From the conclusions drawn at the end of Task 1, the best model to choose is $(XY, XZ, XV, YV, ZV)$. 
+
+```{r, echo = FALSE}
+mbest <- glm(n ~ x + y + z + v + x:y + x:z + x:v + y:v + z:v, family = poisson(link = log), data = data3)
+```
+
+### Procedure to Compare Models
+
+1. **Define Candidate Models**:
+   
+   - **Saturated model**: Includes all main effects and interactions:
+     \[
+     n \sim (x \times y \times z  \times v )
+     \]
+   
+   - **Simplest Model (`m1`)**: Includes only the main effects:
+     \[
+     n \sim x + y + z + v
+     \]
+
+2. **Perform Stepwise Selection Based on AIC**:
+   
+   - Using the `step()` function, we performed stepwise selection to find a balance between model complexity and fit:
+     
+     - **Starting Point**: The most complex model (`saturated`).
+     
+     - **Scope**: From the simplest model (`m1`) to the most complex model (`saturated`).
+     
+     - **Criteria**: AIC (Akaike Information Criterion), which evaluates the trade-off between goodness-of-fit and model complexity.
+     
+     - **Direction**: Both forward and backward, allowing variables to be added or removed iteratively.
+
+3. **Evaluate Models Using Residual Deviance and AIC**:
+   
+   - For each model, the residual deviance (measuring the lack of fit) and AIC were calculated.
+   
+   - Models with lower residual deviance fit the data better, and models with lower AIC balance fit and simplicity.
+
+4. **Compare Models Using Statistical Tests**:
+   
+   - **Likelihood Ratio Test (LRT)**:
+     
+     - Compared nested models (e.g., `saturated` vs. `m1`) to assess whether removing higher-order terms significantly worsens the fit.
+     
+     - Significant \(p\)-values (\(p < 0.05\)) indicate that removing terms leads to a significant loss of fit. \( P = 1 - \text{chi2.cdf(Deviance, Df)} \)
+
+5. **Select the Final Model**:
+   
+   - The final model was chosen based on its low AIC, good residual deviance, and simplicity. It balances fit and complexity effectively.
+In this example, the saturated model is the most complex model that can be considered and m1 is the simplest.
+
+## Task 3
+
+Interpret the model you chose. Which associations are significant? Quantify the associations with odds ratios together with confidence intervals.
+
+### Interpret the model we chose
+```{r, echo = FALSE}
+summary(mbest)
+```
+#### 1. Chosen Model
+\[
+n \sim x + y + z + v + x:y + x:z + x:v + y:v + z:v
+\]
+
+##### Variables:
+
+- \(x\): Mother's age.
+
+- \(y\): Smoking habits.
+
+- \(z\): Gestational age.
+
+- \(v\): Child survival.
+
+- **Two-way interactions**:
+  
+  - \(x:y\): Interaction between mother's age and smoking habits.
+  
+  - \(x:z\): Interaction between mother's age and gestational age.
+  
+  - \(x:v\): Interaction between mother's age and child survival.
+  
+  - \(y:v\): Interaction between smoking habits and child survival.
+  
+  - \(z:v\): Interaction between gestational age and child survival.
+
+---
+
+#### 2. Significant Associations
+
+##### Main Effects:
+
+1. **\(x\) (Mother's Age)**:
+   
+   - Coefficient: \(-0.29199\), \(p = 0.08648\) (marginal significance).
+   
+   - Interpretation: Increasing mother's age slightly decreases the likelihood of the outcome.
+
+2. **\(y\) (Smoking Habits)**:
+   
+   - Coefficient: \(-1.71313\), \(p < 0.001\).
+   
+   - Interpretation: Smoking significantly decreases the likelihood of the outcome.
+
+3. **\(z\) (Gestational Age)**:
+   
+   - Coefficient: \(-0.77237\), \(p < 0.001\).
+   
+   - Interpretation: Shorter gestational age significantly decreases the likelihood of the outcome.
+
+4. **\(v\) (Child Survival)**:
+   
+   - Coefficient: \(1.81422\), \(p < 0.001\).
+   
+   - Interpretation: Child survival significantly increases the likelihood of the outcome.
+
+---
+
+##### Significant Two-Way Interactions:
+
+1. **\(x:y\)**:
+   
+   - Coefficient: \(-0.41132\), \(p < 0.001\).
+   
+   - Interpretation: The negative effect of smoking is stronger for older mothers.
+
+2. **\(x:z\)**:
+   
+   - Coefficient: \(-0.16557\), \(p = 0.08456\) (marginal significance).
+   
+   - Interpretation: The relationship between gestational age and outcome weakens slightly for older mothers.
+
+3. **\(x:v\)**:
+   
+   - Coefficient: \(-0.46481\), \(p = 0.00983\).
+   
+   - Interpretation: The positive effect of child survival is weaker for older mothers.
+
+4. **\(y:v\)**:
+   
+   - Coefficient: \(-0.44375\), \(p = 0.06977\) (marginal significance).
+   
+   - Interpretation: The positive effect of child survival is weaker for smokers.
+
+5. **\(z:v\)**:
+   
+   - Coefficient: \(3.31135\), \(p < 0.001\).
+   
+   - Interpretation: The interaction between gestational age and child survival is highly significant, indicating that survival outcomes improve strongly with longer gestational age.
+
+### Quantify the associations with odds ratios together with confidence intervals.
+
+```{r, echo = FALSE}
+# Calculate Odds Ratios and Confidence Intervals
+exp_coef <- exp(coef(mbest)) # Odds Ratios
+confint_vals <- confint(mbest) # Confidence Intervals
+exp_confint <- exp(confint_vals) # Exponentiate to get OR CIs
+
+# Combine results into a table
+results <- data.frame(
+  Term = names(exp_coef),
+  Odds_Ratio = exp_coef,
+  CI_Lower = exp_confint[, 1],
+  CI_Upper = exp_confint[, 2]
+)
+
+# Display results
+print(results)
+```
+
+#### Key Findings
+
+1. **Main Effects**:
+   
+   - Smoking (\(y\)), gestational age (\(z\)), and child survival (\(v\)) are strongly associated with the outcome, with significant odds ratios.
+   
+   - Mother's age (\(x\)) has a weaker, marginally significant association.
+
+2. **Interactions**:
+   
+   - Significant interactions (\(x:y, x:v, z:v\)) suggest complex relationships between variables:
+     
+     - Smoking's negative effect increases with maternal age.
+     
+     - The positive effect of child survival decreases with maternal age and smoking.
+     
+     - Gestational age strongly amplifies the effect of child survival, highlighting its critical role.
+
+3. **Statistical Significance**:
+   
+   - Terms with confidence intervals that do not include 1 are statistically significant. Marginal associations (\(x, x:z, y:v\)) should be interpreted cautiously.
+
+## Task 4
+
+To find a good model, we systematically try all possible combinations of interaction terms starting with the full model. After checking all the models, we found that no interaction terms were significant for each combination. Thus, we landed on the model which only includes the main effects. That is,
+
+$$
+\text{logit}\bigl[P(V = 1) \bigr] = \beta_0 + \beta_1X + \beta_2Y +\beta_3Z.
+$$
+
+For easier readability, we generate a table with relevant results.
+
+```{r, echo = FALSE}
+# Define the model
+model_simplified <- glm(
+    v ~ x + y + z, family = binomial(link = "logit"), data = data3, weights = n
+                       )
+# Extract coefficients, standard errors, and p-values
+
+summary_model <- summary(model_simplified)
+
+coef_table <- summary_model$coefficients
+coef_df <- data.frame(
+  Coefficient = coef_table[, "Estimate"],
+  Std_Error = coef_table[, "Std. Error"],
+  P_value = round(coef_table[, "Pr(>|z|)"], digits = 4)
+)
+
+# Calculate odds ratios and 95% confidence intervals
+coef_df$Odds_Ratio <- round(exp(coef_df$Coefficient), digits = 4)
+coef_df$CI_Lower <- round(exp(coef_df$Coefficient - 1.96 * coef_df$Std_Error), 
+                          digits = 4)
+coef_df$CI_Upper <- round(exp(coef_df$Coefficient + 1.96 * coef_df$Std_Error), 
+                          digits = 4)
+
+# Rearrange columns for better readability
+coef_df <- coef_df[, c(
+  "Coefficient", "Std_Error", "Odds_Ratio", "CI_Lower", "CI_Upper", "P_value"
+  )]
+
+coef_df 
+```
+
+We are now ready to interpret the model.
+
+### Interpretation of the Table
+
+1. **Intercept**: The estimated odds ratio is roughly $6.13$ and is significant. With the baseline levels for our predictors being $x < 30, y < 5, z < 260$, the odds of child survival when the mother is younger than 30, smokes less than 5 cigarettes/day and the gestational age is less than 260 days approximately 6 times higher than the odds of not surviving.
+
+2. **Mother's Age** $(x)$: The estimated odds ratio is roughly $0.63$ and is significant. Thus being 30+ years old is associated with approximately $37\%$ lower odds of child survival compared to mothers under the age of 30. 
+
+3. **Smoking Habits** $(y)$: 5+ cigarettes/day is associated with $34\%$ lower odds of child survival compared to smoking fewer than 5 cigarettes/day. However, this effect is not statistically significant ($p = 0.1071$), suggesting insufficient evidence to confirm a direct impact of smoking on sural in this dataset.
+
+4. **Gestational Age** $(z)$: Gestational age is the most significant predictor of child survival. Births at $\geq 260$ days are associated with odds of survival that are approximately 27 times greater than the odds for births at $< 260$ days.
+
+The non-significance of smoking habits are rather surprising, since smoking is usually associated with health risks. The non-significance could be due to some limitations such as sparse counts; which could limit the statistical power to detect an effect.
+
+## Task 5
+
+The equivalent log-linear model is $(XYZ, XV, YV, ZV)$, where the two-way interactions `x:v`, `y:v`, `z:v` are of main interest. This is due to logistic models not assuming anything regarding relationships among the predictors.
+
+
+We generate a table a table that includes the coefficients (estimates) and standard error for these three interaction terms.
+
+```{r, echo = FALSE}
+m_loglin <- glm(
+  n ~ x*y*z + x*v + y*v + z*v, 
+  family = poisson(link = "log"),
+  data = data3
+)
+
+# Extract coefficients and standard errors from the log-linear model
+loglinear_coefficients <- summary(m_loglin)$coefficients
+
+# Filter for the two-way interactions of interest: x:v, y:v, and z:v
+loglinear_df <- data.frame(
+  Interaction_Term = rownames(loglinear_coefficients),
+  Coefficient = loglinear_coefficients[, "Estimate"],
+  Std_Error = loglinear_coefficients[, "Std. Error"]
+)
+
+# Subset the interactions of interest (x:v, y:v, z:v)
+loglinear_interactions <- loglinear_df[grep(
+  "x:v|y:v|z:v", loglinear_df$Interaction_Term), ]
+
+loglinear_interactions
+```
+
+Comparing the table with the table presented under Task 4, we observe that the standard error for `z:v` is 'identical' to the standard error for the main effect `z` in the logistic model. The estimates and standard errors for the other terms are approximately the same, likely due to differences in numerical precision and the parameterization of the models.
