@@ -268,7 +268,7 @@ n \sim x + y + z + v + x:y + x:z + x:v + y:v + z:v
 
 4. **\(y:v\)**:
    
-   - Coefficient: \(-0.44375\), \(p = 0.06977\) (marginal significance).
+   - Coefficient: \(-0.44375\), \(p = 0.06977\).
    
    - Interpretation: The positive effect of child survival is weaker for smokers.
 
@@ -365,7 +365,7 @@ We are now ready to interpret the model.
 
 ### Interpretation of the Table
 
-1. **Intercept**: The estimated odds ratio is roughly $6.13$ and is significant. With the baseline levels for our predictors being $x < 30, y < 5, z < 260$, the odds of child survival when the mother is younger than 30, smokes less than 5 cigarettes/day and the gestational age is less than 260 days approximately 6 times higher than the odds of not surviving.
+1. **Intercept**: This is the baseline odds, rather than an actual odds ratio. This means that when all predictors are equal to zero, the risk of child survival is roughly 6.13 times higher than the risk of the child not surviving. 
 
 2. **Mother's Age** $(x)$: The estimated odds ratio is roughly $0.63$ and is significant. Thus being 30+ years old is associated with approximately $37\%$ lower odds of child survival compared to mothers under the age of 30. 
 
