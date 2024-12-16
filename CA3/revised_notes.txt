@@ -1,0 +1,17 @@
+9.1: Some of these are not odds ratios (Loglinear models)
+
+- Odds Ratio only applies for assoication terms, not main effects (see 9.2.3 Interpretation of Loglinear Model Parameters, page 345)
+
+9.1 Revised:
+
+- Focus on the interaction terms. Which associations are significant? That is: "Quantify the associations with odds ratios together with confidence intervals."
+
+10.1-10.4: The intercept can not be interpreted as an odds ratio (Logistic regression)
+
+- not suitable to be interpet as odds ratio but rather as the baseline odds.
+
+- intercept is not usually of particular interest.
+
+10.2-10.4 Revised:
+
+- This is the baseline odds, rather than an actual odds ratio. This means that when all predictors are equal to zero, the risk of child survival is roughly 6.13 times higher than the risk of the child not surviving. 
