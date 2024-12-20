@@ -149,38 +149,36 @@ print(results)
   **Odds ratio = 89.68** (CI: 12.29 to 654.56). 
   Being awake significantly increase the odds of survival by **89.68 times** compared to patients being unconscious, while other predictors are fixed.
 
-- **v14 (Type of Admission):**  
-  **Odds ratio = 0.048** (CI: 0.007 to 0.314).  
-  Patients with acute admission have significantly lower odds of survival compared to those with non-acute admission. Acute admission reduces the odds of survival by approximately **95.2%** (1 - 0.048), holding other predictors constant.
+- **v14 (Type of Admission)**:  
+  **Odds ratio = 20.65** (CI: 3.18 to 134.26).  
+  Patients admitted through acute care have **20.65 times** higher odds of non-survival compared to those admitted through non-acute care, holding other predictors constant.
 
-- **v3 (Age):**  
-  **Odds ratio = 0.96** (CI: 0.933 to 0.984).  
-  For each additional year of age, the odds of survival decrease by approximately **4%** (1 - 0.96), holding other predictors constant. This indicates a small but statistically significant negative effect of age on survival.
+- **v3 (Age)**:  
+  **Odds ratio = 1.04** (CI: 1.016 to 1.072).  
+  Each additional year of age increases the odds of non-survival by approximately **4%** (1.04 times), holding other predictors constant. This indicates a small but statistically significant negative effect of age on survival.
 
-- **v7 (Cancer):**  
-  **Odds ratio = 0.09** (CI: 0.016 to 0.515).  
-  Patients with cancer have significantly lower odds of survival, with their odds being only **9%** compared to patients without cancer, holding other predictors constant.
+- **v7 (Cancer)**:  
+  **Odds ratio = 11.05** (CI: 1.94 to 62.97).  
+  Patients with cancer have **11.05 times** higher odds of non-survival compared to those without cancer, holding other predictors constant. This is a significant risk factor for non-survival.
 
-- **v11 (Blood Pressure):**  
-  **Odds ratio = 1.01** (CI: 1.001 to 1.029).  
-  Each unit increase in blood pressure slightly increases the odds of survival by approximately **1%**, with other predictors adjusted. The effect is small but statistically significant.
+- **v11 (Blood Pressure)**:  
+  **Odds ratio = 0.99** (CI: 0.972 to 0.999).  
+  Each unit increase in blood pressure slightly reduces the odds of non-survival by approximately **1%** (0.99 times), after adjusting for other predictors. This protective effect is small but statistically significant.
 
-- **v18 (Blood Carbon Dioxide):**  
-  **Odds ratio = 9.48** (CI: 1.36 to 66.37).  
-  Patients with blood carbon dioxide levels above 45 have **9.48 times** higher odds of survival compared to those with lower levels, indicating a strong positive impact on survival, after adjusting for other predictors.
+- **v18 (Blood Carbon Dioxide)**:  
+  **Odds ratio = 0.105** (CI: 0.015 to 0.738).  
+  Patients with blood carbon dioxide levels above 45 have significantly lower odds of non-survival, at only **10.5%** of the odds of patients with lower carbon dioxide levels. This suggests a strong protective effect of higher carbon dioxide levels on survival.
 
-- **v17 (Blood pH):**  
-  **Odds ratio = 0.16** (CI: 0.028 to 0.869).  
-  Higher blood pH levels (>7.25) reduce the odds of survival to **16%** compared to patients with lower pH, adjusting for other predictors.
+- **v17 (Blood pH)**:  
+  **Odds ratio = 6.39** (CI: 1.15 to 35.43).  
+  Patients with higher blood pH levels (>7.25) have **6.39 times** higher odds of non-survival compared to patients with lower pH levels, after adjusting for other predictors. This indicates a significant negative impact of elevated pH levels on survival.
 
-#### Conclusion:
-##### Positive Factors:
-- **Consciousness level** has the strongest positive impact on survival, with being awake increasing the odds by 89.68 times.  
-- **Blood carbon dioxide levels above 45** significantly enhance survival odds, increasing them by 9.48 times.
+#### Summary:
 
-##### Negative Factors:
-- **Acute admission** drastically reduces survival odds, with a 95.2% decrease compared to non-acute admission.  
-- **Cancer** and **higher blood pH levels** significantly reduce survival odds, lowering them to 9% and 16% of baseline, respectively.
+1. **Consciousness level (v21)** and **type of admission (v14)** are key determinants of non-survival risk. Unconsciousness and acute admission significantly increase the odds of non-survival.
+2. **Age (v3)** and **cancer status (v7)** also significantly increase the odds of non-survival, highlighting these as high-risk groups.
+3. **Blood pressure (v11)** and **carbon dioxide levels (v18)** have protective effects on survival. Higher carbon dioxide levels, in particular, strongly reduce the odds of non-survival.
+4. **Blood pH (v17)** is associated with a substantial increase in non-survival risk, suggesting that maintaining acid-base balance is a critical factor for survival.
 
 ## Task 2 
 
